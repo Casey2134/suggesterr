@@ -174,7 +174,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # API Keys
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+GOOGLE_GEMINI_API_KEY = os.getenv('GOOGLE_GEMINI_API_KEY')
 
 # External Services
 JELLYFIN_URL = os.getenv('JELLYFIN_URL')

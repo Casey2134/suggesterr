@@ -10,7 +10,7 @@ class GeminiService:
     """Service for AI-powered movie recommendations using Google Gemini API"""
     
     def __init__(self):
-        self.api_key = "AIzaSyC4beT1Plilid1iWbL1CCxZ6miKy6DVuxQ"
+        self.api_key = settings.GOOGLE_GEMINI_API_KEY
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
         self.tmdb_service = TMDBService()
         self.tmdb_tv_service = TMDBTVService()

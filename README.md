@@ -5,12 +5,12 @@ A comprehensive Django web application for intelligent movie and TV show recomme
 ## ✨ Key Features
 
 ### 🤖 Advanced AI Recommendations
-- **Google Gemini Integration**: State-of-the-art AI recommendations using Google's Gemini 2.0 Flash model
-- **OpenAI GPT Integration**: Alternative AI engine for intelligent movie suggestions
+- **Google Gemini 2.0 Flash**: State-of-the-art AI recommendations using Google's latest language model
 - **Library-Aware AI**: Smart recommendations that consider your existing Plex/Jellyfin library
 - **Mood-Based Suggestions**: Get recommendations based on your current mood (happy, sad, excited, etc.)
 - **Similar Movie Discovery**: Find movies similar to ones you love
-- **Collaborative Filtering**: Personalized suggestions based on user ratings and preferences
+- **Personalized AI**: Recommendations adapt to your preferences and viewing history
+- **Collaborative Filtering**: Enhanced with AI-powered personalized suggestions
 
 ### 📚 Smart Library Integration
 - **Library Context Awareness**: AI avoids recommending movies you already own
@@ -147,9 +147,8 @@ REDIS_URL=redis://localhost:6379/0
 # API Keys (Required)
 TMDB_API_KEY=your-tmdb-api-key
 
-# AI Services (Choose one or both)
-OPENAI_API_KEY=your-openai-api-key          # Optional: For OpenAI GPT recommendations
-GOOGLE_GEMINI_API_KEY=your-gemini-api-key   # Optional: For Google Gemini recommendations (primary)
+# AI Service - Google Gemini (Required for AI recommendations)
+GOOGLE_GEMINI_API_KEY=your-gemini-api-key
 
 # Media Server Integration (Optional - for library context)
 JELLYFIN_URL=http://localhost:8096
@@ -169,16 +168,15 @@ SONARR_API_KEY=your-sonarr-api-key
 #### Required
 1. **TMDB API Key**: Sign up at https://www.themoviedb.org/settings/api
 
-#### AI Services (Choose one or both)
-2. **Google Gemini API Key**: Get from https://ai.google.dev/ (Recommended - Primary AI engine)
-3. **OpenAI API Key**: Get from https://platform.openai.com/api-keys (Alternative AI engine)
+#### AI Service (Required for AI recommendations)
+2. **Google Gemini API Key**: Get from https://ai.google.dev/ - Powers all AI recommendations
 
 #### Media Server Integration (Optional - Enables Library Context)
-4. **Jellyfin API Key**: Generate in Jellyfin Dashboard > API Keys
-5. **Plex Token**: Follow https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+3. **Jellyfin API Key**: Generate in Jellyfin Dashboard > API Keys
+4. **Plex Token**: Follow https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
 
 #### Download Management (Optional)
-6. **Radarr/Sonarr API Keys**: Found in Settings > General > Security
+5. **Radarr/Sonarr API Keys**: Found in Settings > General > Security
 
 ### 🚀 Library Context Feature
 
@@ -331,8 +329,7 @@ coverage html  # Generate HTML report
 ### External Integrations
 
 - **TMDB**: Comprehensive movie and TV show data
-- **Google Gemini**: Primary AI engine for intelligent recommendations
-- **OpenAI GPT**: Alternative AI engine for recommendations  
+- **Google Gemini 2.0 Flash**: Advanced AI engine for intelligent recommendations
 - **Jellyfin/Plex**: Media server integration with library context awareness
 - **Radarr/Sonarr**: Automated download management
 
@@ -389,6 +386,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - The Movie Database (TMDB) for movie data
-- OpenAI for AI recommendations
+- Google Gemini for AI recommendations
 - Django and Django REST Framework communities
 - Bootstrap for the UI framework

@@ -1,11 +1,11 @@
 import requests
-import openai
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q, Avg
 from tmdbv3api import TMDb, Movie as TMDbMovie, Genre as TMDbGenre
 from .models import Movie, Genre, UserRating, MovieRecommendation
 from integrations.services import JellyfinService, PlexService, RadarrService, SonarrService
+from .gemini_service import GeminiService
 
 
 class MovieService:
@@ -116,8 +116,7 @@ class TVShowService:
 class RecommendationService:
     def __init__(self):
         self.movie_service = MovieService()
-        if settings.OPENAI_API_KEY:
-            openai.api_key = settings.OPENAI_API_KEY
+        self.gemini_service = GeminiService()
     
     def generate_recommendations(self, user, limit=10, library_context=None):
         # Get user's ratings and preferences
@@ -135,9 +134,9 @@ class RecommendationService:
         # Get recommendations based on collaborative filtering
         collaborative_recommendations = self._get_collaborative_recommendations(user, preferred_genres)
         
-        # Get AI-powered recommendations if OpenAI is configured
-        if settings.OPENAI_API_KEY:
-            ai_recommendations = self._get_ai_recommendations(
+        # Get AI-powered recommendations using Gemini
+        if settings.GOOGLE_GEMINI_API_KEY:
+            ai_recommendations = self._get_gemini_recommendations(
                 user, 
                 high_rated_movies.values_list('movie__title', flat=True),
                 library_context
@@ -233,41 +232,38 @@ class RecommendationService:
         
         return numerator / denominator
     
-    def _get_ai_recommendations(self, user, high_rated_titles, library_context=None):
+    def _get_gemini_recommendations(self, user, high_rated_titles, library_context=None):
         try:
-            # Build library context string
-            library_context_str = ""
-            if library_context and len(library_context) > 0:
-                library_titles = [f"'{movie['title']} ({movie.get('year', 'N/A')})'" for movie in library_context[:30]]
-                library_context_str = f"\n\nIMPORTANT: The user has access to these movies in their personal library: {', '.join(library_titles)}. Do not recommend movies they already have. Consider their collection to suggest complementary films."
+            # Use Gemini service for personalized recommendations based on user's highly rated movies
+            # If the user has highly rated movies, include them in the mood description
+            if high_rated_titles:
+                mood_description = f"similar to movies like {', '.join(list(high_rated_titles)[:5])}"
+            else:
+                mood_description = "entertaining and well-rated"
             
-            prompt = f"""
-            Based on these highly rated movies by the user:
-            {', '.join(high_rated_titles)}{library_context_str}
+            preferences = {
+                'genres': ['drama', 'action', 'comedy'],  # Default genres
+                'mood': mood_description,
+                'year_range': '1980-2024'
+            }
             
-            Suggest 5 similar movies that they might enjoy. 
-            Format your response as a JSON array with objects containing 'title' and 'reason' fields.
-            Only suggest movies that are likely to exist in TMDB database.
-            """
-            
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=500
+            # Get recommendations from Gemini using the user's preferences and library context
+            gemini_recommendations = self.gemini_service.get_personalized_recommendations(
+                preferences, library_context
             )
             
-            import json
-            suggestions = json.loads(response.choices[0].message.content)
-            
+            # Convert Gemini recommendations to the format expected by collaborative filtering
             recommendations = []
-            for suggestion in suggestions:
-                movie = Movie.objects.filter(title__icontains=suggestion['title']).first()
+            for rec in gemini_recommendations:
+                # Try to find the movie in our database
+                movie = Movie.objects.filter(title__icontains=rec['title']).first()
                 if movie:
-                    recommendations.append((movie, suggestion['reason']))
+                    reason = rec.get('ai_reason', 'AI recommended based on your preferences')
+                    recommendations.append((movie, reason))
             
             return recommendations
         except Exception as e:
-            print(f"Error getting AI recommendations: {e}")
+            print(f"Error getting Gemini recommendations: {e}")
             return []
     
     def _create_recommendations(self, user, movies, reasons=None):
