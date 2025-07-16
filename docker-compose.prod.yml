@@ -31,6 +31,7 @@ services:
       - DATABASE_URL=postgresql://suggesterr:${DB_PASSWORD}@db:5432/suggesterr
       - REDIS_URL=redis://redis:6379/0
       - TMDB_API_KEY=${TMDB_API_KEY}
+      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JELLYFIN_URL=${JELLYFIN_URL}
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
@@ -55,6 +56,7 @@ services:
       - DATABASE_URL=postgresql://suggesterr:${DB_PASSWORD}@db:5432/suggesterr
       - REDIS_URL=redis://redis:6379/0
       - TMDB_API_KEY=${TMDB_API_KEY}
+      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JELLYFIN_URL=${JELLYFIN_URL}
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}

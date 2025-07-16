@@ -1,19 +1,36 @@
-# Suggesterr - Movie Recommendation System
+# 🎬 Suggesterr - AI-Powered Movie Recommendation System
 
-A comprehensive Django web application for movie recommendations with AI-powered suggestions and integration with popular media management tools like Jellyfin, Plex, Radarr, and Sonarr.
+A comprehensive Django web application for intelligent movie and TV show recommendations with advanced AI-powered suggestions and seamless integration with popular media management tools like Jellyfin, Plex, Radarr, and Sonarr.
 
-## Features
+## ✨ Key Features
 
-- **Movie Database**: Comprehensive movie database synced with The Movie Database (TMDB)
-- **AI-Powered Recommendations**: Intelligent movie suggestions using collaborative filtering and OpenAI GPT
-- **Genre Browsing**: Browse movies by genres with filters and search functionality
-- **Popular Movies**: Display trending and top-rated movies
-- **Media Server Integration**: Check movie availability on Jellyfin and Plex
-- **Download Management**: Request movies through Radarr and Sonarr
-- **User Ratings**: Rate movies and get personalized recommendations
-- **Responsive Web Interface**: Modern, mobile-friendly user interface
-- **REST API**: Full REST API for all functionality
-- **Docker Support**: Easy deployment with Docker and Docker Compose
+### 🤖 Advanced AI Recommendations
+- **Google Gemini Integration**: State-of-the-art AI recommendations using Google's Gemini 2.0 Flash model
+- **OpenAI GPT Integration**: Alternative AI engine for intelligent movie suggestions
+- **Library-Aware AI**: Smart recommendations that consider your existing Plex/Jellyfin library
+- **Mood-Based Suggestions**: Get recommendations based on your current mood (happy, sad, excited, etc.)
+- **Similar Movie Discovery**: Find movies similar to ones you love
+- **Collaborative Filtering**: Personalized suggestions based on user ratings and preferences
+
+### 📚 Smart Library Integration
+- **Library Context Awareness**: AI avoids recommending movies you already own
+- **Collection Complementing**: Suggestions that fill gaps in your existing library
+- **Plex & Jellyfin Support**: Seamless integration with your media servers
+- **Real-Time Availability**: Check movie availability across your media libraries
+
+### 🎭 Comprehensive Media Management
+- **Movie & TV Show Database**: Complete database synced with The Movie Database (TMDB)
+- **Download Automation**: Request movies/shows through Radarr and Sonarr
+- **User Ratings & Watchlists**: Rate content and maintain personal watchlists
+- **Genre Discovery**: Browse by genres with advanced filtering
+- **Popular & Trending**: Stay updated with trending and top-rated content
+
+### 🔧 Technical Excellence
+- **Modern REST API**: Comprehensive API for all functionality
+- **Responsive Web Interface**: Mobile-friendly, modern UI with Bootstrap 5
+- **Docker Ready**: Easy deployment with Docker and Docker Compose
+- **Background Processing**: Celery integration for heavy tasks
+- **Comprehensive Testing**: Full test suite with API and integration tests
 
 ## Quick Start
 
@@ -127,15 +144,20 @@ DB_PORT=5432
 # Redis
 REDIS_URL=redis://localhost:6379/0
 
-# API Keys
+# API Keys (Required)
 TMDB_API_KEY=your-tmdb-api-key
-OPENAI_API_KEY=your-openai-api-key
 
-# External Services
+# AI Services (Choose one or both)
+OPENAI_API_KEY=your-openai-api-key          # Optional: For OpenAI GPT recommendations
+GOOGLE_GEMINI_API_KEY=your-gemini-api-key   # Optional: For Google Gemini recommendations (primary)
+
+# Media Server Integration (Optional - for library context)
 JELLYFIN_URL=http://localhost:8096
 JELLYFIN_API_KEY=your-jellyfin-api-key
 PLEX_URL=http://localhost:32400
 PLEX_TOKEN=your-plex-token
+
+# Download Management (Optional)
 RADARR_URL=http://localhost:7878
 RADARR_API_KEY=your-radarr-api-key
 SONARR_URL=http://localhost:8989
@@ -144,11 +166,34 @@ SONARR_API_KEY=your-sonarr-api-key
 
 ### API Keys Setup
 
+#### Required
 1. **TMDB API Key**: Sign up at https://www.themoviedb.org/settings/api
-2. **OpenAI API Key**: Get from https://platform.openai.com/api-keys
-3. **Jellyfin API Key**: Generate in Jellyfin Dashboard > API Keys
-4. **Plex Token**: Follow https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
-5. **Radarr/Sonarr API Keys**: Found in Settings > General > Security
+
+#### AI Services (Choose one or both)
+2. **Google Gemini API Key**: Get from https://ai.google.dev/ (Recommended - Primary AI engine)
+3. **OpenAI API Key**: Get from https://platform.openai.com/api-keys (Alternative AI engine)
+
+#### Media Server Integration (Optional - Enables Library Context)
+4. **Jellyfin API Key**: Generate in Jellyfin Dashboard > API Keys
+5. **Plex Token**: Follow https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+
+#### Download Management (Optional)
+6. **Radarr/Sonarr API Keys**: Found in Settings > General > Security
+
+### 🚀 Library Context Feature
+
+To enable smart library-aware recommendations:
+
+1. **Configure your media server** in User Settings:
+   - Choose either Jellyfin or Plex
+   - Enter your server URL and API key/token
+   - Save settings
+
+2. **Benefits of Library Context**:
+   - AI won't recommend movies you already own
+   - Suggestions complement your existing collection
+   - Recommendations fill gaps in similar genres/themes
+   - Works automatically once configured
 
 ## API Documentation
 
@@ -158,28 +203,49 @@ The API uses session-based authentication. Most endpoints require authentication
 
 ### Endpoints
 
-- **Movies**
-  - `GET /api/movies/` - List movies with filtering
-  - `GET /api/movies/{id}/` - Get movie details
-  - `GET /api/movies/popular/` - Get popular movies
-  - `GET /api/movies/top_rated/` - Get top-rated movies
-  - `GET /api/movies/by_genre/?genre=Action` - Get movies by genre
-  - `POST /api/movies/{id}/request_movie/` - Request movie on Radarr
+#### 🎬 Movies
+- `GET /api/movies/` - List movies with filtering
+- `GET /api/movies/{id}/` - Get movie details
+- `GET /api/movies/popular/` - Get popular movies
+- `GET /api/movies/top_rated/` - Get top-rated movies
+- `GET /api/movies/by_genre/?genre_id=28` - Get movies by genre ID
+- `POST /api/movies/{id}/request_movie/` - Request movie on Radarr
 
-- **Genres**
-  - `GET /api/genres/` - List all genres
+#### 🤖 AI Recommendations (New!)
+- `GET /api/movies/ai_recommendations/` - AI-powered personalized recommendations
+  - Parameters: `genres`, `mood`, `year_range`
+  - **Library-aware**: Automatically considers your Plex/Jellyfin library
+- `GET /api/movies/mood_recommendations/` - Mood-based recommendations
+  - Parameters: `mood` (happy, sad, excited, relaxed, romantic, adventurous, thoughtful, nostalgic)
+- `GET /api/movies/similar_movies/` - Find similar movies
+  - Parameters: `title` (movie title to find similar movies for)
 
-- **User Ratings**
-  - `GET /api/ratings/` - Get user's ratings
-  - `POST /api/ratings/` - Rate a movie
+#### 📺 TV Shows
+- `GET /api/tv-shows/` - List TV shows with filtering
+- `GET /api/tv-shows/{id}/` - Get TV show details
+- `GET /api/tv-shows/popular/` - Get popular TV shows
+- `GET /api/tv-shows/ai_recommendations/` - AI-powered TV recommendations
+- `GET /api/tv-shows/mood_recommendations/` - Mood-based TV recommendations
+- `POST /api/tv-shows/{id}/request_tv_show/` - Request TV show on Sonarr
 
-- **Watchlist**
-  - `GET /api/watchlist/` - Get user's watchlist
-  - `POST /api/watchlist/` - Add movie to watchlist
+#### 🎭 Genres
+- `GET /api/genres/` - List all genres
 
-- **Recommendations**
-  - `GET /api/recommendations/` - Get user's recommendations
-  - `POST /api/recommendations/generate/` - Generate new recommendations
+#### ⭐ User Ratings
+- `GET /api/ratings/` - Get user's ratings
+- `POST /api/ratings/` - Rate a movie
+
+#### 📋 Watchlist
+- `GET /api/watchlist/` - Get user's watchlist
+- `POST /api/watchlist/` - Add movie to watchlist
+
+#### 🎯 Recommendations
+- `GET /api/recommendations/` - Get user's recommendations
+- `POST /api/recommendations/generate/` - Generate new recommendations (with library context)
+
+#### ⚙️ User Settings
+- `GET /api/settings/` - Get user settings (including media server config)
+- `POST /api/settings/` - Update user settings
 
 ### Query Parameters
 
@@ -264,10 +330,11 @@ coverage html  # Generate HTML report
 
 ### External Integrations
 
-- **TMDB**: Movie data and metadata
-- **OpenAI**: AI-powered recommendations
-- **Jellyfin/Plex**: Media server availability
-- **Radarr/Sonarr**: Download management
+- **TMDB**: Comprehensive movie and TV show data
+- **Google Gemini**: Primary AI engine for intelligent recommendations
+- **OpenAI GPT**: Alternative AI engine for recommendations  
+- **Jellyfin/Plex**: Media server integration with library context awareness
+- **Radarr/Sonarr**: Automated download management
 
 ## Contributing
 
