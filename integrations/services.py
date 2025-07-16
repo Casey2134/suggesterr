@@ -91,10 +91,24 @@ class JellyfinService:
             # Format movie data for AI context
             library_movies = []
             for item in items:
+                # Handle genres - Jellyfin returns them as a list of strings
+                genres = item.get('Genres', [])
+                if isinstance(genres, list):
+                    # If it's already a list of strings, use directly
+                    if genres and isinstance(genres[0], str):
+                        genre_list = genres
+                    # If it's a list of dictionaries, extract names
+                    elif genres and isinstance(genres[0], dict):
+                        genre_list = [genre.get('Name', '') for genre in genres]
+                    else:
+                        genre_list = []
+                else:
+                    genre_list = []
+                
                 movie_info = {
                     'title': item.get('Name', ''),
                     'year': item.get('ProductionYear'),
-                    'genres': [genre.get('Name', '') for genre in item.get('Genres', [])],
+                    'genres': genre_list,
                     'overview': item.get('Overview', ''),
                     'rating': item.get('CommunityRating'),
                     'content_rating': item.get('OfficialRating')
