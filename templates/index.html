@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Suggesterr - Movie Recommendations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #141414;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #222222;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #808080;
+            --accent-color: #e50914;
+            --accent-hover: #b7070e;
+            --border-color: #333333;
+            --gradient-overlay: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 100%);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #333333;
+            --text-muted: #666666;
+            --accent-color: #0066cc;
+            --accent-hover: #0052a3;
+            --border-color: #e0e0e0;
+        }
+
+        [data-theme="blue"] {
+            --bg-primary: #0a1929;
+            --bg-secondary: #1a2332;
+            --bg-card: #1e293b;
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --border-color: #334155;
+        }
+
+        [data-theme="green"] {
+            --bg-primary: #0d1b0d;
+            --bg-secondary: #1a2e1a;
+            --bg-card: #1e3a1e;
+            --text-primary: #ffffff;
+            --text-secondary: #dcfce7;
+            --text-muted: #bbf7d0;
+            --accent-color: #22c55e;
+            --accent-hover: #16a34a;
+            --border-color: #166534;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            padding: 1rem 0;
+        }
+
+        .header.scrolled {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            color: var(--text-primary);
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 70vh;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1489599731893-b3e0e7c23f5e?w=1920&h=1080&fit=crop');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 3rem;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 0 2rem;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .cta-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(229, 9, 20, 0.3);
+        }
+
+        /* Content Sections */
+        .content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .view-all {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .view-all:hover {
+            color: var(--accent-hover);
+        }
+
+        /* Movie Grid */
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .movie-row {
+            display: flex;
+            overflow-x: auto;
+            gap: 0.75rem;
+            padding: 1rem 0;
+            scroll-behavior: smooth;
+        }
+
+        .movie-row::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .movie-row::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .movie-row::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .movie-row::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .movie-row .movie-card {
+            min-width: 140px;
+            max-width: 140px;
+            flex-shrink: 0;
+        }
+
+        .movie-row .movie-poster {
+            width: 140px;
+            height: 210px;
+            object-fit: cover;
+        }
+
+        .movie-row .movie-title {
+            font-size: 0.85rem;
+            line-height: 1.2;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 140px;
+        }
+
+        .movie-row .movie-info {
+            padding: 0.5rem 0;
+        }
+
+        .movie-row .movie-meta {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .genre-section {
+            margin-bottom: 3rem;
+        }
+
+        .genre-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .mood-btn {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .mood-btn:hover {
+            border-color: var(--accent-color);
+            background: var(--bg-secondary);
+        }
+
+        .mood-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .movie-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        /* Override for horizontal scrolling rows */
+        .movie-row .movie-poster {
+            width: 140px;
+            height: 210px;
+            object-fit: cover;
+        }
+
+        .movie-card:hover .movie-poster {
+            transform: scale(1.1);
+        }
+
+        .movie-info {
+            padding: 1rem;
+        }
+
+        .movie-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .movie-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .movie-year {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .movie-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--accent-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .movie-overview {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .movie-actions {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gradient-overlay);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .movie-card:hover .movie-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 0 0.25rem;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Onboarding */
+        .onboarding-step {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .onboarding-step.active {
+            display: block;
+        }
+
+        .step-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .search-input {
+                width: 200px;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .content {
+                padding: 0 1rem;
+            }
+
+            .movie-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .movie-poster {
+                height: 225px;
+            }
+            
+            .movie-row .movie-card {
+                min-width: 120px;
+                max-width: 120px;
+            }
+            
+            .movie-row .movie-poster {
+                width: 120px;
+                height: 180px;
+            }
+            
+            .movie-row .movie-title {
+                font-size: 0.8rem;
+                max-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <i class="fas fa-film"></i>
+                Suggesterr
+            </a>
+            
+            <nav class="nav-links">
+                <a href="#" class="nav-link active" data-section="home">Home</a>
+                <a href="#" class="nav-link" data-section="movies">Movies</a>
+                <a href="#" class="nav-link" data-section="tv-shows">TV Shows</a>
+                <a href="#" class="nav-link" data-section="ai">AI</a>
+                <a href="#" class="nav-link" data-section="settings">Settings</a>
+            </nav>
+            
+            <div class="user-actions">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search movies..." id="searchInput">
+                </div>
+                
+                <button class="btn btn-primary" onclick="app.showOnboarding()">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Discover Your Next Favorite Movie</h1>
+            <p class="hero-subtitle">
+                Explore thousands of movies with AI-powered recommendations and seamless integration with your media server
+            </p>
+            <button class="cta-button" onclick="app.showOnboarding()">
+                <i class="fas fa-play"></i> Get Started
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="content">
+        <!-- Popular Movies Section -->
+        <section class="section" id="popular-section">
+            <div class="section-header">
+                <h2 class="section-title">Popular Movies</h2>
+                <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="movie-row" id="popularMovies">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Rated Movies Section -->
+        <section class="section" id="top-rated-section">
+            <div class="section-header">
+                <h2 class="section-title">Top Rated Movies</h2>
+                <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="movie-row" id="topRatedMovies">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Popular TV Shows Section -->
+        <section class="section" id="popular-tv-section">
+            <div class="section-header">
+                <h2 class="section-title">Popular TV Shows</h2>
+                <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="movie-row" id="popularTVShows">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Rated TV Shows Section -->
+        <section class="section" id="top-rated-tv-section">
+            <div class="section-header">
+                <h2 class="section-title">Top Rated TV Shows</h2>
+                <a href="#" class="view-all">View All</a>
+            </div>
+            <div class="movie-row" id="topRatedTVShows">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Genre Sections -->
+        <div id="genre-sections">
+            <!-- Genre sections will be dynamically loaded here -->
+        </div>
+
+        <!-- Movies Section (organized view) -->
+        <section class="section" id="movies-section" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">Popular Movies</h2>
+            </div>
+            <div class="movie-row" id="moviesPopular">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">Top Rated Movies</h2>
+            </div>
+            <div class="movie-row" id="moviesTopRated">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">Now Playing</h2>
+            </div>
+            <div class="movie-row" id="moviesNowPlaying">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">Upcoming Movies</h2>
+            </div>
+            <div class="movie-row" id="moviesUpcoming">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TV Shows Section -->
+        <section class="section" id="tv-shows-section" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">Popular TV Shows</h2>
+            </div>
+            <div class="movie-row" id="tvShowsPopular">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">Top Rated TV Shows</h2>
+            </div>
+            <div class="movie-row" id="tvShowsTopRated">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">Airing Today</h2>
+            </div>
+            <div class="movie-row" id="tvShowsAiringToday">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            
+            <div class="section-header" style="margin-top: 2rem;">
+                <h2 class="section-title">On The Air</h2>
+            </div>
+            <div class="movie-row" id="tvShowsOnTheAir">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Recommendations Section -->
+        <section class="section" id="ai-section" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">AI Movie Recommendations</h2>
+                <button class="btn btn-secondary" onclick="app.refreshAIRecommendations()" style="margin-left: auto;">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            
+            <!-- Mood Selection -->
+            <div class="mood-selector" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #fff;">How are you feeling today?</h3>
+                <div class="mood-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="mood-btn active" data-mood="happy">😊 Happy</button>
+                    <button class="mood-btn" data-mood="sad">😢 Sad</button>
+                    <button class="mood-btn" data-mood="excited">🤩 Excited</button>
+                    <button class="mood-btn" data-mood="relaxed">😌 Relaxed</button>
+                    <button class="mood-btn" data-mood="romantic">💕 Romantic</button>
+                    <button class="mood-btn" data-mood="adventurous">🗺️ Adventurous</button>
+                    <button class="mood-btn" data-mood="thoughtful">🤔 Thoughtful</button>
+                    <button class="mood-btn" data-mood="nostalgic">🎭 Nostalgic</button>
+                </div>
+            </div>
+
+            <!-- AI Recommendations -->
+            <div class="ai-recommendations">
+                <h3 style="margin-bottom: 1rem; color: #fff;">AI Recommendations for You</h3>
+                <div class="movie-row" id="aiRecommendations">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalized Recommendations -->
+            <div class="personalized-recommendations" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #fff;">Personalized Movie Picks</h3>
+                <div class="movie-row" id="personalizedRecommendations">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TV Show AI Recommendations -->
+            <div class="tv-recommendations" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #fff;">AI TV Show Recommendations</h3>
+                <div class="movie-row" id="aiTVRecommendations">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalized TV Show Recommendations -->
+            <div class="personalized-tv-recommendations" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem; color: #fff;">Personalized TV Show Picks</h3>
+                <div class="movie-row" id="personalizedTVRecommendations">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Load More Button -->
+        <div class="loading" id="loadMoreSpinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    <!-- Onboarding Modal -->
+    <div class="modal" id="onboardingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Welcome to Suggesterr</h2>
+                <button class="modal-close" onclick="app.closeOnboarding()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: Welcome -->
+                <div class="onboarding-step active" id="step1">
+                    <div class="step-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3 class="step-title">Welcome to Suggesterr!</h3>
+                    <p class="step-description">
+                        Let's set up your movie recommendation system. We'll help you configure integrations with your media server and download clients.
+                    </p>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="app.closeOnboarding()">Skip Setup</button>
+                        <button class="btn btn-primary" onclick="app.nextStep()">Get Started</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Radarr Setup -->
+                <div class="onboarding-step" id="step2">
+                    <div class="step-icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h3 class="step-title">Configure Radarr</h3>
+                    <p class="step-description">
+                        Connect your Radarr instance to automatically download movies you request.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Radarr URL</label>
+                        <input type="url" class="form-input" id="radarrUrl" placeholder="http://localhost:7878">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key</label>
+                        <input type="text" class="form-input" id="radarrApiKey" placeholder="Your Radarr API Key">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="app.prevStep()">Back</button>
+                        <button class="btn btn-primary" onclick="app.nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Sonarr Setup -->
+                <div class="onboarding-step" id="step3">
+                    <div class="step-icon">
+                        <i class="fas fa-tv"></i>
+                    </div>
+                    <h3 class="step-title">Configure Sonarr</h3>
+                    <p class="step-description">
+                        Connect your Sonarr instance to automatically download TV shows you request.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Sonarr URL</label>
+                        <input type="url" class="form-input" id="sonarrUrl" placeholder="http://localhost:8989">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key</label>
+                        <input type="text" class="form-input" id="sonarrApiKey" placeholder="Your Sonarr API Key">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="app.prevStep()">Back</button>
+                        <button class="btn btn-primary" onclick="app.nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Media Server Setup -->
+                <div class="onboarding-step" id="step4">
+                    <div class="step-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <h3 class="step-title">Media Server Integration</h3>
+                    <p class="step-description">
+                        Connect to your Jellyfin or Plex server to check movie availability.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Server Type</label>
+                        <select class="form-input" id="serverType">
+                            <option value="">Select Server Type</option>
+                            <option value="jellyfin">Jellyfin</option>
+                            <option value="plex">Plex</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Server URL</label>
+                        <input type="url" class="form-input" id="serverUrl" placeholder="http://localhost:8096">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key/Token</label>
+                        <input type="text" class="form-input" id="serverApiKey" placeholder="Your API Key or Token">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="app.prevStep()">Back</button>
+                        <button class="btn btn-primary" onclick="app.nextStep()">Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Complete -->
+                <div class="onboarding-step" id="step5">
+                    <div class="step-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="step-title">Setup Complete!</h3>
+                    <p class="step-description">
+                        Your Suggesterr is now configured. You can start discovering and requesting movies!
+                    </p>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="app.prevStep()">Back</button>
+                        <button class="btn btn-primary" onclick="app.completeOnboarding()">Start Exploring</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Movie Details Modal -->
+    <div class="modal" id="movieModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="movieTitle">Movie Details</h2>
+                <button class="modal-close" onclick="app.closeMovieModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="movieDetails">
+                <!-- Movie details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class MovieApp {
+            constructor() {
+                this.apiBase = '/api';
+                this.currentTheme = localStorage.getItem('theme') || 'dark';
+                this.currentPage = 1;
+                this.isLoading = false;
+                this.currentStep = 1;
+                this.maxSteps = 5;
+                this.currentSection = 'home';
+                this.init();
+            }
+
+            async init() {
+                this.applyTheme(this.currentTheme);
+                this.setupEventListeners();
+                this.loadInitialData();
+                
+                // Show onboarding if first visit
+                if (!localStorage.getItem('onboardingComplete')) {
+                    this.showOnboarding();
+                }
+            }
+
+            setupEventListeners() {
+                // Header scroll effect
+                window.addEventListener('scroll', () => {
+                    const header = document.getElementById('header');
+                    if (window.scrollY > 100) {
+                        header.classList.add('scrolled');
+                    } else {
+                        header.classList.remove('scrolled');
+                    }
+                });
+
+                // Search functionality
+                const searchInput = document.getElementById('searchInput');
+                let searchTimeout;
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        this.searchMovies(e.target.value);
+                    }, 500);
+                });
+
+                // Infinite scroll - only on movies tab
+                window.addEventListener('scroll', () => {
+                    if (this.currentSection === 'movies' && window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+                        this.loadMoreMovies();
+                    }
+                });
+
+                // Navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const section = e.target.dataset.section;
+                        this.navigateToSection(section);
+                    });
+                });
+
+                // Modal close on background click
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        this.closeModals();
+                    }
+                });
+            }
+
+            async loadInitialData() {
+                await Promise.all([
+                    this.loadPopularMovies(),
+                    this.loadTopRatedMovies(),
+                    this.loadPopularTVShows(),
+                    this.loadTopRatedTVShows(),
+                    this.loadGenreSections()
+                ]);
+            }
+
+            async loadPopularMovies() {
+                try {
+                    const response = await fetch(`${this.apiBase}/movies/popular/`);
+                    const movies = await response.json();
+                    this.renderMovies(movies, 'popularMovies');
+                } catch (error) {
+                    console.error('Error loading popular movies:', error);
+                }
+            }
+
+            async loadTopRatedMovies() {
+                try {
+                    const response = await fetch(`${this.apiBase}/movies/top_rated/`);
+                    const movies = await response.json();
+                    this.renderMovies(movies, 'topRatedMovies');
+                } catch (error) {
+                    console.error('Error loading top rated movies:', error);
+                }
+            }
+
+            async loadPopularTVShows() {
+                try {
+                    const response = await fetch(`${this.apiBase}/tv-shows/popular/`);
+                    const tvShows = await response.json();
+                    this.renderTVShows(tvShows, 'popularTVShows');
+                } catch (error) {
+                    console.error('Error loading popular TV shows:', error);
+                }
+            }
+
+            async loadTopRatedTVShows() {
+                try {
+                    const response = await fetch(`${this.apiBase}/tv-shows/top_rated/`);
+                    const tvShows = await response.json();
+                    this.renderTVShows(tvShows, 'topRatedTVShows');
+                } catch (error) {
+                    console.error('Error loading top rated TV shows:', error);
+                }
+            }
+
+            async loadGenreSections() {
+                try {
+                    const genresResponse = await fetch(`${this.apiBase}/genres/`);
+                    const genres = await genresResponse.json();
+                    
+                    // Popular genres to show on home page
+                    const popularGenres = [
+                        { id: 28, name: 'Action' },
+                        { id: 35, name: 'Comedy' },
+                        { id: 18, name: 'Drama' },
+                        { id: 27, name: 'Horror' },
+                        { id: 878, name: 'Science Fiction' },
+                        { id: 53, name: 'Thriller' },
+                        { id: 10749, name: 'Romance' },
+                        { id: 16, name: 'Animation' }
+                    ];
+                    
+                    const genreSectionsContainer = document.getElementById('genre-sections');
+                    
+                    for (const genre of popularGenres) {
+                        const genreSection = document.createElement('section');
+                        genreSection.className = 'section genre-section';
+                        genreSection.innerHTML = `
+                            <div class="section-header">
+                                <h2 class="section-title">${genre.name}</h2>
+                                <a href="#" class="view-all" data-genre="${genre.id}">View All</a>
+                            </div>
+                            <div class="movie-row" id="genre-${genre.id}">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                </div>
+                            </div>
+                        `;
+                        genreSectionsContainer.appendChild(genreSection);
+                        
+                        // Load movies for this genre
+                        this.loadGenreMovies(genre.id);
+                    }
+                } catch (error) {
+                    console.error('Error loading genre sections:', error);
+                }
+            }
+
+            async loadGenreMovies(genreId) {
+                try {
+                    const response = await fetch(`${this.apiBase}/movies/by_genre/?genre_id=${genreId}`);
+                    const movies = await response.json();
+                    this.renderMovies(movies, `genre-${genreId}`);
+                } catch (error) {
+                    console.error(`Error loading movies for genre ${genreId}:`, error);
+                }
+            }
+
+            async loadMoreMovies() {
+                // Disable infinite scroll for now since TMDB API is paginated
+                // This will prevent the infinite loop issue
+                return;
+            }
+
+            async searchMovies(query) {
+                if (!query.trim()) {
+                    this.loadInitialData();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiBase}/movies/search/?q=${encodeURIComponent(query)}`);
+                    const movies = await response.json();
+                    
+                    // Hide other sections and show search results
+                    document.getElementById('popular-section').style.display = 'none';
+                    document.getElementById('top-rated-section').style.display = 'none';
+                    document.getElementById('all-movies-section').style.display = 'block';
+                    
+                    this.renderMovies(movies, 'allMovies');
+                } catch (error) {
+                    console.error('Error searching movies:', error);
+                }
+            }
+
+            renderMovies(movies, containerId) {
+                const container = document.getElementById(containerId);
+                
+                if (!movies || movies.length === 0) {
+                    container.innerHTML = '<div class="loading"><p>No movies found.</p></div>';
+                    return;
+                }
+
+                container.innerHTML = movies.map(movie => this.createMovieCard(movie)).join('');
+            }
+
+            appendMovies(movies, containerId) {
+                const container = document.getElementById(containerId);
+                const movieCards = movies.map(movie => this.createMovieCard(movie)).join('');
+                container.innerHTML += movieCards;
+            }
+
+            createMovieCard(movie) {
+                const posterUrl = movie.poster_path ? 
+                    (movie.poster_path.startsWith('https://') ? movie.poster_path : `https://image.tmdb.org/t/p/w300${movie.poster_path}`) : 
+                    'https://via.placeholder.com/300x450?text=No+Poster';
+
+                const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'Unknown';
+                const isAvailable = movie.available_on_jellyfin || movie.available_on_plex;
+                
+                return `
+                    <div class="movie-card" onclick="app.showMovieDetails(${movie.id})">
+                        <img src="${posterUrl}" class="movie-poster" alt="${movie.title}">
+                        <div class="movie-info">
+                            <h3 class="movie-title">${movie.title}</h3>
+                            <div class="movie-meta">
+                                <span class="movie-year">${year}</span>
+                                <span class="movie-rating">
+                                    <i class="fas fa-star"></i> ${movie.vote_average || 'N/A'}
+                                </span>
+                            </div>
+                            <p class="movie-overview">${movie.overview || 'No overview available.'}</p>
+                        </div>
+                        <div class="movie-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); app.showMovieDetails(${movie.id})">
+                                <i class="fas fa-info-circle"></i> Details
+                            </button>
+                            ${!isAvailable ? `
+                                <button class="action-btn" onclick="event.stopPropagation(); app.requestMovie(${movie.id})">
+                                    <i class="fas fa-download"></i> Request
+                                </button>
+                            ` : `
+                                <button class="action-btn secondary">
+                                    <i class="fas fa-check"></i> Available
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+
+            async showMovieDetails(movieId) {
+                try {
+                    const response = await fetch(`${this.apiBase}/movies/${movieId}/`);
+                    const movie = await response.json();
+                    
+                    document.getElementById('movieTitle').textContent = movie.title;
+                    document.getElementById('movieDetails').innerHTML = this.createMovieDetailsHTML(movie);
+                    document.getElementById('movieModal').classList.add('active');
+                } catch (error) {
+                    console.error('Error loading movie details:', error);
+                }
+            }
+
+            createMovieDetailsHTML(movie) {
+                const posterUrl = movie.poster_path ? 
+                    `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 
+                    'https://via.placeholder.com/500x750?text=No+Poster';
+
+                const genres = movie.genres ? movie.genres.map(g => g.name).join(', ') : 'Unknown';
+                const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'Unknown';
+                const runtime = movie.runtime ? `${movie.runtime} minutes` : 'Unknown';
+                const isAvailable = movie.available_on_jellyfin || movie.available_on_plex;
+
+                return `
+                    <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+                        <div style="flex-shrink: 0;">
+                            <img src="${posterUrl}" style="width: 100%; height: 350px; object-fit: cover; border-radius: 8px;" alt="${movie.title}">
+                        </div>
+                        <div style="flex: 1;">
+                            <h3>${movie.title} (${year})</h3>
+                            <p><strong>Rating:</strong> ${movie.vote_average}/10 (${movie.vote_count} votes)</p>
+                            <p><strong>Genres:</strong> ${genres}</p>
+                            <p><strong>Runtime:</strong> ${runtime}</p>
+                            <p><strong>Overview:</strong></p>
+                            <p>${movie.overview || 'No overview available.'}</p>
+                            
+                            <div style="margin-top: 1rem;">
+                                <strong>Availability:</strong>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                    ${movie.available_on_jellyfin ? '<span class="btn btn-secondary">Jellyfin</span>' : ''}
+                                    ${movie.available_on_plex ? '<span class="btn btn-secondary">Plex</span>' : ''}
+                                    ${movie.requested_on_radarr ? '<span class="btn btn-secondary">Requested</span>' : ''}
+                                    ${!isAvailable && !movie.requested_on_radarr ? '<span class="btn btn-secondary">Not Available</span>' : ''}
+                                </div>
+                            </div>
+                            
+                            ${!isAvailable && !movie.requested_on_radarr ? `
+                                <button class="btn btn-primary" onclick="app.requestMovie(${movie.id})" style="margin-top: 1rem;">
+                                    <i class="fas fa-download"></i> Request Movie
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            async requestMovie(movieId) {
+                try {
+                    const response = await fetch(`${this.apiBase}/movies/${movieId}/request_movie/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert('Movie requested successfully! It will be downloaded automatically.');
+                        this.loadInitialData(); // Refresh the movie data
+                    } else {
+                        alert('Failed to request movie. Please check your Radarr configuration.');
+                    }
+                } catch (error) {
+                    console.error('Error requesting movie:', error);
+                    alert('Error requesting movie. Please try again.');
+                }
+            }
+
+            // Onboarding functionality
+            showOnboarding() {
+                document.getElementById('onboardingModal').classList.add('active');
+            }
+
+            closeOnboarding() {
+                document.getElementById('onboardingModal').classList.remove('active');
+                localStorage.setItem('onboardingComplete', 'true');
+            }
+
+            nextStep() {
+                if (this.currentStep < this.maxSteps) {
+                    document.getElementById(`step${this.currentStep}`).classList.remove('active');
+                    this.currentStep++;
+                    document.getElementById(`step${this.currentStep}`).classList.add('active');
+                }
+            }
+
+            prevStep() {
+                if (this.currentStep > 1) {
+                    document.getElementById(`step${this.currentStep}`).classList.remove('active');
+                    this.currentStep--;
+                    document.getElementById(`step${this.currentStep}`).classList.add('active');
+                }
+            }
+
+            completeOnboarding() {
+                // Save configuration
+                const config = {
+                    radarrUrl: document.getElementById('radarrUrl').value,
+                    radarrApiKey: document.getElementById('radarrApiKey').value,
+                    serverType: document.getElementById('serverType').value,
+                    serverUrl: document.getElementById('serverUrl').value,
+                    serverApiKey: document.getElementById('serverApiKey').value
+                };
+                
+                localStorage.setItem('suggesterrConfig', JSON.stringify(config));
+                this.closeOnboarding();
+            }
+
+            closeMovieModal() {
+                document.getElementById('movieModal').classList.remove('active');
+            }
+
+            closeModals() {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+
+            navigateToSection(section) {
+                // Track current section
+                this.currentSection = section;
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelector(`[data-section="${section}"]`).classList.add('active');
+
+                // Show/hide sections based on navigation
+                switch (section) {
+                    case 'home':
+                        document.getElementById('popular-section').style.display = 'block';
+                        document.getElementById('top-rated-section').style.display = 'block';
+                        document.getElementById('popular-tv-section').style.display = 'block';
+                        document.getElementById('top-rated-tv-section').style.display = 'block';
+                        document.getElementById('genre-sections').style.display = 'block';
+                        document.getElementById('movies-section').style.display = 'none';
+                        document.getElementById('tv-shows-section').style.display = 'none';
+                        document.getElementById('ai-section').style.display = 'none';
+                        break;
+                    case 'movies':
+                        document.getElementById('popular-section').style.display = 'none';
+                        document.getElementById('top-rated-section').style.display = 'none';
+                        document.getElementById('popular-tv-section').style.display = 'none';
+                        document.getElementById('top-rated-tv-section').style.display = 'none';
+                        document.getElementById('genre-sections').style.display = 'none';
+                        document.getElementById('movies-section').style.display = 'block';
+                        document.getElementById('tv-shows-section').style.display = 'none';
+                        document.getElementById('ai-section').style.display = 'none';
+                        // Load movies for the movies tab
+                        this.loadMoviesSection();
+                        break;
+                    case 'tv-shows':
+                        document.getElementById('popular-section').style.display = 'none';
+                        document.getElementById('top-rated-section').style.display = 'none';
+                        document.getElementById('popular-tv-section').style.display = 'none';
+                        document.getElementById('top-rated-tv-section').style.display = 'none';
+                        document.getElementById('genre-sections').style.display = 'none';
+                        document.getElementById('movies-section').style.display = 'none';
+                        document.getElementById('tv-shows-section').style.display = 'block';
+                        document.getElementById('ai-section').style.display = 'none';
+                        // Load TV shows for the TV shows tab
+                        this.loadTVShowsSection();
+                        break;
+                    case 'ai':
+                        document.getElementById('popular-section').style.display = 'none';
+                        document.getElementById('top-rated-section').style.display = 'none';
+                        document.getElementById('popular-tv-section').style.display = 'none';
+                        document.getElementById('top-rated-tv-section').style.display = 'none';
+                        document.getElementById('genre-sections').style.display = 'none';
+                        document.getElementById('movies-section').style.display = 'none';
+                        document.getElementById('tv-shows-section').style.display = 'none';
+                        document.getElementById('ai-section').style.display = 'block';
+                        // Load AI recommendations
+                        this.loadAIRecommendations();
+                        break;
+                    case 'settings':
+                        this.showOnboarding();
+                        break;
+                }
+            }
+
+            async loadMoviesSection() {
+                // Load all movie categories for the movies tab
+                this.loadMovies('popular', 'moviesPopular');
+                this.loadMovies('top_rated', 'moviesTopRated');
+                this.loadMovies('now_playing', 'moviesNowPlaying');
+                this.loadMovies('upcoming', 'moviesUpcoming');
+            }
+
+            async loadMovies(endpoint, containerId) {
+                try {
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    }
+                    
+                    const response = await fetch(`${this.apiBase}/movies/${endpoint}/`);
+                    const movies = await response.json();
+                    
+                    if (movies && movies.length > 0) {
+                        this.renderMovies(movies, containerId);
+                    } else {
+                        if (container) {
+                            container.innerHTML = '<div class="loading"><p>No movies found.</p></div>';
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error loading ${endpoint} movies:`, error);
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = '<div class="loading"><p>Error loading movies.</p></div>';
+                    }
+                }
+            }
+
+            async loadTVShowsSection() {
+                // Load all TV show categories for the TV shows tab
+                this.loadTVShows('popular', 'tvShowsPopular');
+                this.loadTVShows('top_rated', 'tvShowsTopRated');
+                this.loadTVShows('airing_today', 'tvShowsAiringToday');
+                this.loadTVShows('on_the_air', 'tvShowsOnTheAir');
+            }
+
+            async loadTVShows(endpoint, containerId) {
+                try {
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    }
+                    
+                    const response = await fetch(`${this.apiBase}/tv-shows/${endpoint}/`);
+                    const tvShows = await response.json();
+                    
+                    if (tvShows && tvShows.length > 0) {
+                        this.renderTVShows(tvShows, containerId);
+                    } else {
+                        if (container) {
+                            container.innerHTML = '<div class="loading"><p>No TV shows found.</p></div>';
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error loading ${endpoint} TV shows:`, error);
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.innerHTML = '<div class="loading"><p>Error loading TV shows.</p></div>';
+                    }
+                }
+            }
+
+            renderTVShows(tvShows, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) {
+                    console.error('Container not found:', containerId);
+                    return;
+                }
+                container.innerHTML = '';
+                
+                tvShows.forEach((tvShow, index) => {
+                    container.appendChild(this.createTVShowCard(tvShow, index));
+                });
+            }
+
+            createTVShowCard(tvShow, index) {
+                // Format air date - TV shows use first_air_date
+                const airDate = tvShow.first_air_date ? new Date(tvShow.first_air_date).getFullYear() : 'TBA';
+                
+                // Format rating
+                const rating = tvShow.vote_average ? tvShow.vote_average.toFixed(1) : 'N/A';
+                
+                // Use title field that should be consistent
+                const title = tvShow.title || tvShow.name || 'Unknown Title';
+                
+                // Use the same structure as createMovieCard for consistency
+                const posterUrl = tvShow.poster_path || 'https://via.placeholder.com/300x450?text=No+Image';
+                
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.onclick = () => this.showTVShowDetails(tvShow);
+                
+                card.innerHTML = `
+                    <img src="${posterUrl}" class="movie-poster" alt="${title}" loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'">
+                    <div class="movie-info">
+                        <h3 class="movie-title" title="${title}">${title}</h3>
+                        <div class="movie-meta">
+                            <span class="movie-year">${airDate}</span>
+                            <span class="movie-rating">
+                                <i class="fas fa-star"></i>
+                                ${rating}
+                            </span>
+                        </div>
+                        <p class="movie-overview">${tvShow.overview || 'No overview available.'}</p>
+                    </div>
+                    <div class="movie-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); app.showTVShowDetails(${tvShow.id || tvShow.tmdb_id})">
+                            <i class="fas fa-info-circle"></i> Details
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); app.requestTVShow(${tvShow.id || tvShow.tmdb_id})">
+                            <i class="fas fa-download"></i> Request
+                        </button>
+                    </div>
+                `;
+                
+                return card;
+            }
+
+            showTVShowDetails(tvShow) {
+                // Similar to showMovieDetails but for TV shows
+                const modal = document.getElementById('movieModal');
+                const title = document.getElementById('movieTitle');
+                const details = document.getElementById('movieDetails');
+                
+                const showTitle = tvShow.title || tvShow.name || 'Unknown Title';
+                title.textContent = showTitle;
+                
+                const airDate = tvShow.first_air_date ? new Date(tvShow.first_air_date).getFullYear() : 'TBA';
+                const rating = tvShow.vote_average ? tvShow.vote_average.toFixed(1) : 'N/A';
+                const seasons = tvShow.number_of_seasons ? `${tvShow.number_of_seasons} season(s)` : 'Unknown';
+                const episodes = tvShow.number_of_episodes ? `${tvShow.number_of_episodes} episode(s)` : 'Unknown';
+                
+                details.innerHTML = `
+                    <div class="movie-details-content">
+                        <div class="movie-details-poster">
+                            <img src="${tvShow.poster_path || 'https://via.placeholder.com/300x450?text=No+Image'}" 
+                                 style="width: 100%; height: 350px; object-fit: cover; border-radius: 8px;"
+                                 alt="${showTitle}">
+                        </div>
+                        <div class="movie-details-info">
+                            <div class="movie-details-meta">
+                                <span class="detail-item">
+                                    <i class="fas fa-calendar"></i>
+                                    First Air Date: ${airDate}
+                                </span>
+                                <span class="detail-item">
+                                    <i class="fas fa-star"></i>
+                                    Rating: ${rating}/10
+                                </span>
+                                <span class="detail-item">
+                                    <i class="fas fa-tv"></i>
+                                    ${seasons}, ${episodes}
+                                </span>
+                                ${tvShow.status ? `<span class="detail-item">
+                                    <i class="fas fa-info-circle"></i>
+                                    Status: ${tvShow.status}
+                                </span>` : ''}
+                            </div>
+                            <div class="movie-details-overview">
+                                <h4>Overview</h4>
+                                <p>${tvShow.overview || 'No overview available.'}</p>
+                            </div>
+                            <div class="movie-details-actions">
+                                <button class="btn btn-primary" onclick="app.requestTVShow(${tvShow.id})">
+                                    <i class="fas fa-download"></i>
+                                    Request TV Show
+                                </button>
+                                <button class="btn btn-secondary" onclick="app.addToWatchlist(${tvShow.id}, 'tv')">
+                                    <i class="fas fa-plus"></i>
+                                    Add to Watchlist
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.add('active');
+            }
+
+            async requestTVShow(tvShowId) {
+                try {
+                    const response = await fetch(`${this.apiBase}/tv-shows/${tvShowId}/request_tv_show/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        alert('TV show request submitted successfully!');
+                    } else {
+                        alert(result.error || 'Failed to request TV show');
+                    }
+                } catch (error) {
+                    console.error('Error requesting TV show:', error);
+                    alert('Error requesting TV show. Please try again.');
+                }
+            }
+
+            async loadAIRecommendations() {
+                this.setupMoodButtons();
+                this.loadMoodRecommendations('happy');
+                this.loadPersonalizedRecommendations();
+                this.loadTVMoodRecommendations('happy');
+                this.loadPersonalizedTVRecommendations();
+            }
+
+            async refreshAIRecommendations() {
+                // Get the current active mood
+                const activeMoodBtn = document.querySelector('.mood-btn.active');
+                const currentMood = activeMoodBtn ? activeMoodBtn.dataset.mood : 'happy';
+                
+                // Reload recommendations with current mood
+                this.loadMoodRecommendations(currentMood);
+                this.loadPersonalizedRecommendations();
+                this.loadTVMoodRecommendations(currentMood);
+                this.loadPersonalizedTVRecommendations();
+            }
+
+            setupMoodButtons() {
+                const moodButtons = document.querySelectorAll('.mood-btn');
+                moodButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        // Remove active class from all buttons
+                        moodButtons.forEach(btn => btn.classList.remove('active'));
+                        // Add active class to clicked button
+                        e.target.classList.add('active');
+                        // Load recommendations for selected mood
+                        const mood = e.target.dataset.mood;
+                        this.loadMoodRecommendations(mood);
+                        this.loadTVMoodRecommendations(mood);
+                    });
+                });
+            }
+
+            async loadMoodRecommendations(mood) {
+                try {
+                    const container = document.getElementById('aiRecommendations');
+                    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    
+                    const response = await fetch(`${this.apiBase}/movies/mood_recommendations/?mood=${mood}`);
+                    const movies = await response.json();
+                    
+                    if (movies && movies.length > 0) {
+                        this.renderMoviesWithAI(movies, 'aiRecommendations');
+                    } else {
+                        container.innerHTML = '<p>No recommendations available for this mood.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading mood recommendations:', error);
+                    document.getElementById('aiRecommendations').innerHTML = '<p>Error loading recommendations.</p>';
+                }
+            }
+
+            async loadPersonalizedRecommendations() {
+                try {
+                    const container = document.getElementById('personalizedRecommendations');
+                    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    
+                    const response = await fetch(`${this.apiBase}/movies/ai_recommendations/`);
+                    const movies = await response.json();
+                    
+                    if (movies && movies.length > 0) {
+                        this.renderMoviesWithAI(movies, 'personalizedRecommendations');
+                    } else {
+                        container.innerHTML = '<p>No personalized recommendations available.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading personalized recommendations:', error);
+                    document.getElementById('personalizedRecommendations').innerHTML = '<p>Error loading recommendations.</p>';
+                }
+            }
+
+            async loadTVMoodRecommendations(mood) {
+                try {
+                    const container = document.getElementById('aiTVRecommendations');
+                    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    
+                    const response = await fetch(`${this.apiBase}/tv-shows/mood_recommendations/?mood=${mood}`);
+                    const tvShows = await response.json();
+                    
+                    if (tvShows && tvShows.length > 0) {
+                        this.renderTVShowsWithAI(tvShows, 'aiTVRecommendations');
+                    } else {
+                        container.innerHTML = '<p>No TV show recommendations available for this mood.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading TV show mood recommendations:', error);
+                    document.getElementById('aiTVRecommendations').innerHTML = '<p>Error loading TV show recommendations.</p>';
+                }
+            }
+
+            async loadPersonalizedTVRecommendations() {
+                try {
+                    const container = document.getElementById('personalizedTVRecommendations');
+                    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    
+                    const response = await fetch(`${this.apiBase}/tv-shows/ai_recommendations/`);
+                    const tvShows = await response.json();
+                    
+                    if (tvShows && tvShows.length > 0) {
+                        this.renderTVShowsWithAI(tvShows, 'personalizedTVRecommendations');
+                    } else {
+                        container.innerHTML = '<p>No personalized TV show recommendations available.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading personalized TV show recommendations:', error);
+                    document.getElementById('personalizedTVRecommendations').innerHTML = '<p>Error loading TV show recommendations.</p>';
+                }
+            }
+
+            renderMoviesWithAI(movies, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) {
+                    console.error('Container not found:', containerId);
+                    return;
+                }
+                container.innerHTML = '';
+                
+                movies.forEach((movie, index) => {
+                    try {
+                        // Create a temporary container to parse the HTML string
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = this.createMovieCard(movie);
+                        const movieCard = tempDiv.firstElementChild;
+                        
+                        if (!movieCard) {
+                            console.error('Failed to create movie card for:', movie.title);
+                            return;
+                        }
+                        
+                        // Add AI reason if available
+                        if (movie.ai_reason) {
+                            const movieInfo = movieCard.querySelector('.movie-info');
+                            if (movieInfo) {
+                                const aiReason = document.createElement('div');
+                                aiReason.className = 'ai-reason';
+                                aiReason.style.cssText = 'font-size: 0.75rem; color: var(--accent-color); margin-top: 0.25rem; font-style: italic;';
+                                aiReason.textContent = movie.ai_reason;
+                                movieInfo.appendChild(aiReason);
+                            }
+                        }
+                        
+                        container.appendChild(movieCard);
+                    } catch (error) {
+                        console.error('Error rendering movie card:', error, movie);
+                    }
+                });
+            }
+
+            renderTVShowsWithAI(tvShows, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) {
+                    console.error('Container not found:', containerId);
+                    return;
+                }
+                container.innerHTML = '';
+                
+                tvShows.forEach((tvShow, index) => {
+                    try {
+                        // Create TV show card using the createTVShowCard method
+                        const tvShowCard = this.createTVShowCard(tvShow, index);
+                        
+                        if (!tvShowCard) {
+                            console.error('Failed to create TV show card for:', tvShow.title || tvShow.name);
+                            return;
+                        }
+                        
+                        // Add AI reason if available
+                        if (tvShow.ai_reason) {
+                            const tvShowInfo = tvShowCard.querySelector('.movie-info');
+                            if (tvShowInfo) {
+                                const aiReason = document.createElement('div');
+                                aiReason.className = 'ai-reason';
+                                aiReason.style.cssText = 'font-size: 0.75rem; color: var(--accent-color); margin-top: 0.25rem; font-style: italic;';
+                                aiReason.textContent = tvShow.ai_reason;
+                                tvShowInfo.appendChild(aiReason);
+                            }
+                        }
+                        
+                        container.appendChild(tvShowCard);
+                    } catch (error) {
+                        console.error('Error rendering TV show card:', error, tvShow);
+                    }
+                });
+            }
+
+            applyTheme(theme) {
+                document.documentElement.removeAttribute('data-theme');
+                
+                if (theme !== 'dark') {
+                    document.documentElement.setAttribute('data-theme', theme);
+                }
+
+                localStorage.setItem('theme', theme);
+            }
+
+            getCookie(name) {
+                // For CSRF token, try to get from meta tag first
+                if (name === 'csrftoken') {
+                    const metaToken = document.querySelector('meta[name=csrf-token]');
+                    if (metaToken) {
+                        return metaToken.getAttribute('content');
+                    }
+                }
+                
+                // Fallback to cookie-based lookup
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+
+            // Save settings to localStorage
+            completeOnboarding() {
+                // Gather all the onboarding data
+                const settings = {
+                    radarr_url: document.getElementById('radarrUrl').value,
+                    radarr_api_key: document.getElementById('radarrApiKey').value,
+                    sonarr_url: document.getElementById('sonarrUrl').value,
+                    sonarr_api_key: document.getElementById('sonarrApiKey').value,
+                    server_type: document.getElementById('serverType').value,
+                    server_url: document.getElementById('serverUrl').value,
+                    server_api_key: document.getElementById('serverApiKey').value
+                };
+
+                // Save to localStorage
+                localStorage.setItem('suggesterr_settings', JSON.stringify(settings));
+                
+                this.closeOnboarding();
+                alert('Settings saved successfully!');
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new MovieApp();
+        });
+    </script>
+</body>
+</html>
