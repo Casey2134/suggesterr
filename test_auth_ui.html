@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication UI Tests</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-suite { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
+        .test-case { margin: 10px 0; padding: 10px; border-left: 3px solid #ddd; }
+        .pass { border-left-color: green; background: #f0fff0; }
+        .fail { border-left-color: red; background: #fff0f0; }
+        .log { background: #f5f5f5; padding: 10px; margin: 5px 0; font-family: monospace; }
+        button { margin: 5px; padding: 8px 16px; }
+        #test-container { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Authentication UI Tests</h1>
+    
+    <div id="test-results"></div>
+    
+    <!-- Hidden test container with UI elements -->
+    <div id="test-container">
+        <!-- Simulate the actual HTML structure -->
+        <div id="guest-actions" style="display: flex;">
+            <button>Login</button>
+            <button>Sign Up</button>
+        </div>
+        
+        <div id="user-actions" style="display: none;">
+            <span id="username-display"></span>
+            <button id="settingsBtn">Settings</button>
+        </div>
+        
+        <div class="hero-actions">
+            <button id="getStartedBtn">Get Started</button>
+            <button id="loginBtn" style="display: none;">Login</button>
+            <button id="registerBtn" style="display: none;">Create Account</button>
+        </div>
+    </div>
+
+    <script>
+        // Simplified version of the auth logic for testing
+        class AuthUITester {
+            constructor() {
+                this.isAuthenticated = false;
+                this.currentUser = null;
+                this.testResults = [];
+            }
+
+            hideElements(elementIds) {
+                elementIds.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = 'none';
+                        element.style.visibility = 'hidden';
+                    }
+                });
+            }
+
+            showElements(elementIds, displayType = 'flex') {
+                elementIds.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = displayType;
+                        element.style.visibility = 'visible';
+                    }
+                });
+            }
+
+            showAuthenticatedUI() {
+                this.hideElements(['guest-actions']);
+                this.showElements(['user-actions']);
+                
+                const usernameDisplay = document.getElementById('username-display');
+                if (usernameDisplay && this.currentUser) {
+                    usernameDisplay.textContent = `Welcome, ${this.currentUser.username}`;
+                }
+                
+                this.hideElements(['getStartedBtn', 'loginBtn', 'registerBtn']);
+            }
+
+            showGuestUI() {
+                this.showElements(['guest-actions']);
+                this.hideElements(['user-actions']);
+                this.hideElements(['getStartedBtn']);
+                this.showElements(['loginBtn', 'registerBtn'], 'inline-block');
+            }
+
+            updateUIForAuthState() {
+                if (this.isAuthenticated && this.currentUser) {
+                    this.showAuthenticatedUI();
+                } else {
+                    this.showGuestUI();
+                }
+            }
+
+            // Test methods
+            simulateLogin(username) {
+                this.isAuthenticated = true;
+                this.currentUser = { username: username };
+                this.updateUIForAuthState();
+            }
+
+            simulateLogout() {
+                this.isAuthenticated = false;
+                this.currentUser = null;
+                this.updateUIForAuthState();
+            }
+
+            resetToInitialState() {
+                // Reset to initial HTML state
+                document.getElementById('guest-actions').style.display = 'flex';
+                document.getElementById('user-actions').style.display = 'none';
+                document.getElementById('getStartedBtn').style.display = 'block';
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('registerBtn').style.display = 'none';
+                document.getElementById('username-display').textContent = '';
+                
+                this.isAuthenticated = false;
+                this.currentUser = null;
+            }
+
+            // Test assertions
+            assertElementVisible(elementId, testName) {
+                const element = document.getElementById(elementId);
+                const isVisible = element && 
+                    window.getComputedStyle(element).display !== 'none' &&
+                    window.getComputedStyle(element).visibility !== 'hidden';
+                
+                this.testResults.push({
+                    name: testName,
+                    passed: isVisible,
+                    message: isVisible ? `✓ ${elementId} is visible` : `✗ ${elementId} is not visible`,
+                    details: element ? `display: ${window.getComputedStyle(element).display}, visibility: ${window.getComputedStyle(element).visibility}` : 'Element not found'
+                });
+            }
+
+            assertElementHidden(elementId, testName) {
+                const element = document.getElementById(elementId);
+                const isHidden = element && 
+                    (window.getComputedStyle(element).display === 'none' ||
+                     window.getComputedStyle(element).visibility === 'hidden');
+                
+                this.testResults.push({
+                    name: testName,
+                    passed: isHidden,
+                    message: isHidden ? `✓ ${elementId} is hidden` : `✗ ${elementId} is not hidden`,
+                    details: element ? `display: ${window.getComputedStyle(element).display}, visibility: ${window.getComputedStyle(element).visibility}` : 'Element not found'
+                });
+            }
+
+            assertTextContent(elementId, expectedText, testName) {
+                const element = document.getElementById(elementId);
+                const actualText = element ? element.textContent : '';
+                const passed = actualText === expectedText;
+                
+                this.testResults.push({
+                    name: testName,
+                    passed: passed,
+                    message: passed ? `✓ ${elementId} has correct text` : `✗ ${elementId} text mismatch`,
+                    details: `Expected: "${expectedText}", Actual: "${actualText}"`
+                });
+            }
+
+            runTests() {
+                this.testResults = [];
+                
+                // Test 1: Initial state (guest UI)
+                console.log('Running Test 1: Initial State');
+                this.resetToInitialState();
+                this.assertElementVisible('guest-actions', 'Initial state - guest actions visible');
+                this.assertElementHidden('user-actions', 'Initial state - user actions hidden');
+                
+                // Test 2: After login (authenticated UI)
+                console.log('Running Test 2: After Login');
+                this.simulateLogin('testuser');
+                this.assertElementHidden('guest-actions', 'After login - guest actions hidden');
+                this.assertElementVisible('user-actions', 'After login - user actions visible');
+                this.assertTextContent('username-display', 'Welcome, testuser', 'After login - username display');
+                this.assertElementHidden('loginBtn', 'After login - hero login button hidden');
+                this.assertElementHidden('registerBtn', 'After login - hero register button hidden');
+                
+                // Test 3: After logout (back to guest UI)
+                console.log('Running Test 3: After Logout');
+                this.simulateLogout();
+                this.assertElementVisible('guest-actions', 'After logout - guest actions visible');
+                this.assertElementHidden('user-actions', 'After logout - user actions hidden');
+                this.assertElementVisible('loginBtn', 'After logout - hero login button visible');
+                this.assertElementVisible('registerBtn', 'After logout - hero register button visible');
+                
+                // Test 4: Multiple login/logout cycles
+                console.log('Running Test 4: Multiple Cycles');
+                this.simulateLogin('admin');
+                this.simulateLogout();
+                this.simulateLogin('user2');
+                this.assertElementHidden('guest-actions', 'Multiple cycles - guest actions hidden');
+                this.assertElementVisible('user-actions', 'Multiple cycles - user actions visible');
+                this.assertTextContent('username-display', 'Welcome, user2', 'Multiple cycles - username display');
+                
+                this.displayResults();
+            }
+
+            displayResults() {
+                const resultsContainer = document.getElementById('test-results');
+                const passedTests = this.testResults.filter(test => test.passed).length;
+                const totalTests = this.testResults.length;
+                
+                let html = `
+                    <div class="test-suite">
+                        <h2>Authentication UI Test Results</h2>
+                        <p><strong>Tests Passed: ${passedTests}/${totalTests}</strong></p>
+                        <button onclick="authTester.runTests()">Run Tests Again</button>
+                        <button onclick="authTester.runOnboardingTests()">Run Onboarding Tests</button>
+                `;
+                
+                this.testResults.forEach(test => {
+                    html += `
+                        <div class="test-case ${test.passed ? 'pass' : 'fail'}">
+                            <strong>${test.name}</strong><br>
+                            ${test.message}<br>
+                            <small>${test.details}</small>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                resultsContainer.innerHTML = html;
+            }
+
+            runOnboardingTests() {
+                console.log('Running Onboarding Tests');
+                const onboardingResults = [];
+                
+                // Test localStorage behavior
+                localStorage.removeItem('onboardingCompleted');
+                const shouldShow1 = !localStorage.getItem('onboardingCompleted');
+                onboardingResults.push({
+                    name: 'Onboarding localStorage - initial state',
+                    passed: shouldShow1,
+                    message: shouldShow1 ? '✓ Should show onboarding initially' : '✗ Should show onboarding initially',
+                    details: `localStorage.getItem('onboardingCompleted'): ${localStorage.getItem('onboardingCompleted')}`
+                });
+                
+                // Test after completion
+                localStorage.setItem('onboardingCompleted', 'true');
+                const shouldShow2 = !localStorage.getItem('onboardingCompleted');
+                onboardingResults.push({
+                    name: 'Onboarding localStorage - after completion',
+                    passed: !shouldShow2,
+                    message: !shouldShow2 ? '✓ Should not show onboarding after completion' : '✗ Should not show onboarding after completion',
+                    details: `localStorage.getItem('onboardingCompleted'): ${localStorage.getItem('onboardingCompleted')}`
+                });
+                
+                // Test settings check logic
+                const testSettings1 = {};
+                const hasConfig1 = !!(testSettings1.server_url || testSettings1.server_type);
+                onboardingResults.push({
+                    name: 'Settings check - empty settings',
+                    passed: !hasConfig1,
+                    message: !hasConfig1 ? '✓ Empty settings should trigger onboarding' : '✗ Empty settings should trigger onboarding',
+                    details: `server_url: ${testSettings1.server_url}, server_type: ${testSettings1.server_type}`
+                });
+                
+                const testSettings2 = { server_url: 'http://localhost:8096', server_type: 'jellyfin' };
+                const hasConfig2 = !!(testSettings2.server_url || testSettings2.server_type);
+                onboardingResults.push({
+                    name: 'Settings check - configured settings',
+                    passed: hasConfig2,
+                    message: hasConfig2 ? '✓ Configured settings should not trigger onboarding' : '✗ Configured settings should not trigger onboarding',
+                    details: `server_url: ${testSettings2.server_url}, server_type: ${testSettings2.server_type}`
+                });
+                
+                // Display onboarding results
+                const resultsContainer = document.getElementById('test-results');
+                const passedTests = onboardingResults.filter(test => test.passed).length;
+                const totalTests = onboardingResults.length;
+                
+                let html = resultsContainer.innerHTML;
+                html += `
+                    <div class="test-suite">
+                        <h2>Onboarding Test Results</h2>
+                        <p><strong>Tests Passed: ${passedTests}/${totalTests}</strong></p>
+                `;
+                
+                onboardingResults.forEach(test => {
+                    html += `
+                        <div class="test-case ${test.passed ? 'pass' : 'fail'}">
+                            <strong>${test.name}</strong><br>
+                            ${test.message}<br>
+                            <small>${test.details}</small>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                resultsContainer.innerHTML = html;
+            }
+        }
+
+        // Initialize and run tests
+        const authTester = new AuthUITester();
+        
+        // Run tests when page loads
+        window.addEventListener('load', () => {
+            authTester.runTests();
+        });
+    </script>
+</body>
+</html>

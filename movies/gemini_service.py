@@ -37,7 +37,8 @@ class GeminiService:
             response = requests.post(
                 f"{self.base_url}?key={self.api_key}",
                 headers=headers,
-                json=data
+                json=data,
+                timeout=30  # Add timeout to prevent hanging
             )
             response.raise_for_status()
             
@@ -48,9 +49,22 @@ class GeminiService:
             
         except requests.exceptions.RequestException as e:
             print(f"Gemini API error: {e}")
-            return None
+            
+            # Handle specific error types
+            if hasattr(e, 'response') and e.response is not None:
+                status_code = e.response.status_code
+                if status_code == 503:
+                    return "I'm sorry, but the AI service is temporarily unavailable. This is usually a temporary issue with Google's servers. Please try again in a few minutes."
+                elif status_code == 429:
+                    return "I'm currently receiving too many requests. Please wait a moment and try again."
+                elif status_code == 400:
+                    return "I encountered an issue processing your request. Please try rephrasing your message."
+                elif status_code >= 500:
+                    return "The AI service is experiencing technical difficulties. Please try again shortly."
+            
+            return "I'm having trouble connecting to the AI service right now. Please try again in a moment."
     
-    def get_personalized_recommendations(self, user_preferences: Dict = None, library_context: List[Dict] = None) -> List[Dict]:
+    def get_personalized_recommendations(self, user_preferences: Dict = None, library_context: List[Dict] = None, negative_feedback_context: List[int] = None) -> List[Dict]:
         """Get personalized movie recommendations based on user preferences and library context"""
         if user_preferences is None:
             user_preferences = {}
@@ -65,9 +79,14 @@ class GeminiService:
             library_titles = [f"'{movie['title']} ({movie.get('year', 'N/A')})'" for movie in library_context[:50]]  # Limit to avoid token limits
             library_context_str = f"\n\nIMPORTANT: The user has access to these movies in their personal library: {', '.join(library_titles)}. Try to recommend movies that complement this collection or fill gaps in similar genres/themes, but avoid recommending movies they already have."
         
+        # Build negative feedback context string
+        negative_feedback_str = ""
+        if negative_feedback_context and len(negative_feedback_context) > 0:
+            negative_feedback_str = f"\n\nIMPORTANT: The user has marked these TMDB movie IDs as 'Not Interested': {', '.join(map(str, negative_feedback_context[:50]))}. DO NOT recommend any movies with these TMDB IDs under any circumstances."
+        
         prompt = f"""
         Recommend 10 popular movies that are {mood} and fall into these genres: {', '.join(genres)}.
-        Focus on movies from {year_range}.{library_context_str}
+        Focus on movies from {year_range}.{library_context_str}{negative_feedback_str}
         
         Please provide your recommendations in exactly this JSON format:
         {{
@@ -114,7 +133,7 @@ class GeminiService:
             print("Failed to parse Gemini API response as JSON")
             return []
     
-    def get_mood_based_recommendations(self, mood: str, library_context: List[Dict] = None) -> List[Dict]:
+    def get_mood_based_recommendations(self, mood: str, library_context: List[Dict] = None, negative_feedback_context: List[int] = None) -> List[Dict]:
         """Get movie recommendations based on user's mood and library context"""
         mood_prompts = {
             'happy': 'uplifting, feel-good movies that will make me smile',
@@ -135,8 +154,13 @@ class GeminiService:
             library_titles = [f"'{movie['title']} ({movie.get('year', 'N/A')})'" for movie in library_context[:50]]
             library_context_str = f"\n\nIMPORTANT: The user has access to these movies in their personal library: {', '.join(library_titles)}. Try to recommend movies that complement this collection but avoid duplicating movies they already have."
         
+        # Build negative feedback context string
+        negative_feedback_str = ""
+        if negative_feedback_context and len(negative_feedback_context) > 0:
+            negative_feedback_str = f"\n\nIMPORTANT: The user has marked these TMDB movie IDs as 'Not Interested': {', '.join(map(str, negative_feedback_context[:50]))}. DO NOT recommend any movies with these TMDB IDs under any circumstances."
+        
         prompt = f"""
-        Recommend 8 {mood_description} movies from the last 10 years.{library_context_str}
+        Recommend 8 {mood_description} movies from the last 10 years.{library_context_str}{negative_feedback_str}
         
         Please provide your recommendations in exactly this JSON format:
         {{
@@ -181,7 +205,7 @@ class GeminiService:
             print("Failed to parse Gemini API response as JSON")
             return []
     
-    def get_similar_movies(self, movie_title: str, library_context: List[Dict] = None) -> List[Dict]:
+    def get_similar_movies(self, movie_title: str, library_context: List[Dict] = None, negative_feedback_context: List[int] = None) -> List[Dict]:
         """Get movies similar to a given movie, considering library context"""
         # Build library context string
         library_context_str = ""
@@ -189,9 +213,14 @@ class GeminiService:
             library_titles = [f"'{movie['title']} ({movie.get('year', 'N/A')})'" for movie in library_context[:50]]
             library_context_str = f"\n\nNote: The user has these movies in their library: {', '.join(library_titles)}. Avoid recommending movies they already have, but consider their collection when suggesting similar films."
         
+        # Build negative feedback context string
+        negative_feedback_str = ""
+        if negative_feedback_context and len(negative_feedback_context) > 0:
+            negative_feedback_str = f"\n\nIMPORTANT: The user has marked these TMDB movie IDs as 'Not Interested': {', '.join(map(str, negative_feedback_context[:50]))}. DO NOT recommend any movies with these TMDB IDs under any circumstances."
+        
         prompt = f"""
         Recommend 6 movies similar to "{movie_title}".
-        Focus on movies with similar themes, genres, or storytelling style.{library_context_str}
+        Focus on movies with similar themes, genres, or storytelling style.{library_context_str}{negative_feedback_str}
         
         Please provide your recommendations in exactly this JSON format:
         {{
@@ -239,7 +268,8 @@ class GeminiService:
     def _search_movie_on_tmdb(self, title: str, year: int = None) -> Optional[Dict]:
         """Search for a movie on TMDB and return detailed information"""
         try:
-            movies = self.tmdb_service.search_movies(title)
+            search_result = self.tmdb_service.search_movies(title)
+            movies = search_result.get('results', []) if search_result else []
             if not movies:
                 return None
             

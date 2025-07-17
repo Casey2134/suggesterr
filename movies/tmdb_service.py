@@ -30,44 +30,86 @@ class TMDBService:
             print(f"TMDB API error: {e}")
             return None
     
-    def get_popular_movies(self, page: int = 1) -> List[dict]:
+    def get_popular_movies(self, page: int = 1) -> dict:
         """Get popular movies from TMDB"""
         data = self._make_request("movie/popular", {"page": page})
-        return self._format_movies(data.get('results', []) if data else [])
+        if data:
+            return {
+                'page': data.get('page', page),
+                'results': self._format_movies(data.get('results', [])),
+                'total_pages': data.get('total_pages', 1),
+                'total_results': data.get('total_results', 0)
+            }
+        return {'page': page, 'results': [], 'total_pages': 1, 'total_results': 0}
     
-    def get_top_rated_movies(self, page: int = 1) -> List[dict]:
+    def get_top_rated_movies(self, page: int = 1) -> dict:
         """Get top rated movies from TMDB"""
         data = self._make_request("movie/top_rated", {"page": page})
-        return self._format_movies(data.get('results', []) if data else [])
+        if data:
+            return {
+                'page': data.get('page', page),
+                'results': self._format_movies(data.get('results', [])),
+                'total_pages': data.get('total_pages', 1),
+                'total_results': data.get('total_results', 0)
+            }
+        return {'page': page, 'results': [], 'total_pages': 1, 'total_results': 0}
     
-    def get_now_playing_movies(self, page: int = 1) -> List[dict]:
+    def get_now_playing_movies(self, page: int = 1) -> dict:
         """Get now playing movies from TMDB"""
         data = self._make_request("movie/now_playing", {"page": page})
-        return self._format_movies(data.get('results', []) if data else [])
+        if data:
+            return {
+                'page': data.get('page', page),
+                'results': self._format_movies(data.get('results', [])),
+                'total_pages': data.get('total_pages', 1),
+                'total_results': data.get('total_results', 0)
+            }
+        return {'page': page, 'results': [], 'total_pages': 1, 'total_results': 0}
     
-    def get_upcoming_movies(self, page: int = 1) -> List[dict]:
+    def get_upcoming_movies(self, page: int = 1) -> dict:
         """Get upcoming movies from TMDB"""
         data = self._make_request("movie/upcoming", {"page": page})
-        return self._format_movies(data.get('results', []) if data else [])
+        if data:
+            return {
+                'page': data.get('page', page),
+                'results': self._format_movies(data.get('results', [])),
+                'total_pages': data.get('total_pages', 1),
+                'total_results': data.get('total_results', 0)
+            }
+        return {'page': page, 'results': [], 'total_pages': 1, 'total_results': 0}
     
-    def search_movies(self, query: str, page: int = 1) -> List[dict]:
+    def search_movies(self, query: str, page: int = 1) -> dict:
         """Search movies by query"""
         data = self._make_request("search/movie", {"query": query, "page": page})
-        return self._format_movies(data.get('results', []) if data else [])
+        if data:
+            return {
+                'page': data.get('page', page),
+                'results': self._format_movies(data.get('results', [])),
+                'total_pages': data.get('total_pages', 1),
+                'total_results': data.get('total_results', 0)
+            }
+        return {'page': page, 'results': [], 'total_pages': 1, 'total_results': 0}
     
     def get_movie_details(self, movie_id: int) -> Optional[dict]:
         """Get detailed information about a specific movie"""
         data = self._make_request(f"movie/{movie_id}")
         return self._format_movie(data) if data else None
     
-    def get_movies_by_genre(self, genre_id: int, page: int = 1) -> List[dict]:
+    def get_movies_by_genre(self, genre_id: int, page: int = 1) -> dict:
         """Get movies by genre ID"""
         data = self._make_request("discover/movie", {
             "with_genres": genre_id,
             "page": page,
             "sort_by": "popularity.desc"
         })
-        return self._format_movies(data.get('results', []) if data else [])
+        if data:
+            return {
+                'page': data.get('page', page),
+                'results': self._format_movies(data.get('results', [])),
+                'total_pages': data.get('total_pages', 1),
+                'total_results': data.get('total_results', 0)
+            }
+        return {'page': page, 'results': [], 'total_pages': 1, 'total_results': 0}
     
     def get_genres(self) -> List[dict]:
         """Get all available movie genres"""
@@ -99,7 +141,5 @@ class TMDBService:
             'genres': [{'id': g.get('id'), 'name': g.get('name')} for g in movie.get('genres', [])] if 'genres' in movie else [],
             'genre_ids': movie.get('genre_ids', []),
             'adult': movie.get('adult', False),
-            'available_on_jellyfin': False,  # Will be checked separately
-            'available_on_plex': False,      # Will be checked separately
             'requested_on_radarr': False,    # Will be checked separately
         }

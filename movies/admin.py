@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Movie, Genre, UserRating, UserWatchlist, MovieRecommendation
+from .models import Movie, UserRating, UserWatchlist, MovieRecommendation
+from core.models import Genre
 
 
 @admin.register(Genre)
@@ -10,8 +11,8 @@ class GenreAdmin(admin.ModelAdmin):
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
-    list_display = ('title', 'release_date', 'vote_average', 'popularity', 'available_on_jellyfin', 'available_on_plex')
-    list_filter = ('release_date', 'available_on_jellyfin', 'available_on_plex', 'requested_on_radarr', 'genres')
+    list_display = ('title', 'release_date', 'vote_average', 'popularity', 'requested_on_radarr')
+    list_filter = ('release_date', 'requested_on_radarr', 'genres')
     search_fields = ('title', 'overview')
     filter_horizontal = ('genres',)
     readonly_fields = ('tmdb_id', 'created_at', 'updated_at')

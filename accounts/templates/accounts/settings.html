@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Settings - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content" style="padding-top: 6rem;">
+    <!-- Settings Section -->
+    <section class="section" id="settings-section">
+        <div class="section-header">
+            <h2 class="section-title">Settings</h2>
+        </div>
+        
+        <div class="settings-container">
+            <!-- User Profile Settings -->
+            <div class="settings-card">
+                <h3 class="settings-card-title"><i class="fas fa-user"></i> Profile</h3>
+                <div class="settings-content">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" id="settingsUsername" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="settingsEmail" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme Settings -->
+            <div class="settings-card">
+                <h3 class="settings-card-title"><i class="fas fa-palette"></i> Appearance</h3>
+                <div class="settings-content">
+                    <div class="form-group">
+                        <label class="form-label">Theme</label>
+                        <select class="form-input" id="settingsTheme">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                            <option value="blue">Blue</option>
+                            <option value="green">Green</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalization Settings -->
+            <div class="settings-card">
+                <h3 class="settings-card-title"><i class="fas fa-brain"></i> Personalization</h3>
+                <div class="settings-content">
+                    <div class="form-group">
+                        <label class="form-label">Discovery Quiz</label>
+                        <div class="quiz-status-container">
+                            <div id="quiz-status" class="quiz-status">
+                                <div class="loading-spinner"></div>
+                                <span>Loading quiz status...</span>
+                            </div>
+                            <div class="quiz-actions">
+                                <a href="{% url 'recommendations:discovery_quiz' %}" 
+                                   class="btn btn-primary" id="take-quiz-btn">
+                                    <i class="fas fa-play"></i> Take Discovery Quiz
+                                </a>
+                                <button class="btn btn-secondary d-none" id="retake-quiz-btn" 
+                                        onclick="retakeQuiz()">
+                                    <i class="fas fa-redo"></i> Retake Quiz
+                                </button>
+                            </div>
+                        </div>
+                        <p class="form-help">
+                            Complete our Discovery Quiz to help us understand your movie preferences 
+                            and provide more personalized recommendations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radarr Settings -->
+            <div class="settings-card">
+                <h3 class="settings-card-title"><i class="fas fa-download"></i> Radarr (Movie Downloads)</h3>
+                <div class="settings-content">
+                    <div class="form-group">
+                        <label class="form-label">Radarr URL</label>
+                        <input type="url" class="form-input" id="settingsRadarrUrl" placeholder="http://localhost:7878">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key</label>
+                        <input type="password" class="form-input" id="settingsRadarrApiKey" placeholder="Your Radarr API Key">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sonarr Settings -->
+            <div class="settings-card">
+                <h3 class="settings-card-title"><i class="fas fa-tv"></i> Sonarr (TV Show Downloads)</h3>
+                <div class="settings-content">
+                    <div class="form-group">
+                        <label class="form-label">Sonarr URL</label>
+                        <input type="url" class="form-input" id="settingsSonarrUrl" placeholder="http://localhost:8989">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key</label>
+                        <input type="password" class="form-input" id="settingsSonarrApiKey" placeholder="Your Sonarr API Key">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Server Settings -->
+            <div class="settings-card">
+                <h3 class="settings-card-title"><i class="fas fa-server"></i> Media Server</h3>
+                <div class="settings-content">
+                    <div class="form-group">
+                        <label class="form-label">Server Type</label>
+                        <select class="form-input" id="settingsServerType">
+                            <option value="">Select Server Type</option>
+                            <option value="jellyfin">Jellyfin</option>
+                            <option value="plex">Plex</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Server URL</label>
+                        <input type="url" class="form-input" id="settingsServerUrl" placeholder="http://localhost:8096">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Key/Token</label>
+                        <input type="password" class="form-input" id="settingsServerApiKey" placeholder="Your API Key or Token">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="settings-actions">
+                <button class="btn btn-primary" onclick="app.saveSettings()">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button class="btn btn-secondary" onclick="app.testConnections()">
+                    <i class="fas fa-plug"></i> Test Connections
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'accounts/js/settings.js' %}"></script>
+{% endblock %}

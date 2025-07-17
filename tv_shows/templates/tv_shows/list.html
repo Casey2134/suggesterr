@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}TV Shows - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/suggesterr.css' %}">
+{% endblock %}
+
+{% block header_search %}
+<div class="search-container">
+    <input type="text" class="search-input" placeholder="Search TV shows..." id="searchInput">
+</div>
+{% endblock %}
+
+{% block hero_section %}
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">Discover Amazing TV Shows</h1>
+        <p class="hero-subtitle">Explore popular, top-rated, and currently airing TV shows from around the world</p>
+        
+        <!-- Hero actions -->
+        <div class="hero-actions">
+            <button id="getStartedBtn" class="btn btn-primary btn-lg" onclick="app.showOnboarding()">Get Started</button>
+        </div>
+    </div>
+    <div class="hero-background"></div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div id="dashboard">
+    <!-- Popular TV Shows Section -->
+    <section class="section" id="popular-tv-section">
+        <div class="section-header">
+            <h2 class="section-title">Popular TV Shows</h2>
+            <a href="{% url 'tv_shows:popular' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="tvShowsPopular">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Top Rated TV Shows Section -->
+    <section class="section" id="top-rated-tv-section">
+        <div class="section-header">
+            <h2 class="section-title">Top Rated TV Shows</h2>
+            <a href="{% url 'tv_shows:top_rated' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="tvShowsTopRated">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Airing Today Section -->
+    <section class="section" id="airing-today-section">
+        <div class="section-header">
+            <h2 class="section-title">Airing Today</h2>
+        </div>
+        <div class="movie-row" id="tvShowsAiringToday">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- On The Air Section -->
+    <section class="section" id="on-the-air-section">
+        <div class="section-header">
+            <h2 class="section-title">On The Air</h2>
+        </div>
+        <div class="movie-row" id="tvShowsOnTheAir">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Results Section (hidden by default) -->
+    <section class="section" id="search-results-section" style="display: none;">
+        <div class="section-header">
+            <h2 class="section-title">Search Results</h2>
+        </div>
+        <div class="movie-row" id="searchResults">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- TV Show-specific modals -->
+{% include 'tv_shows/partials/tv_show_details_modal.html' %}
+{% include 'tv_shows/partials/tv_show_request_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Page-specific JavaScript would go here if needed -->
+{% endblock %}

@@ -18,11 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from movies.template_views import index
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('admin/', admin.site.urls),
+    # Core application (dashboard/home)
+    path('', include('core.urls')),
+    
+    # App-specific URLs
+    path('movies/', include('movies.urls')),
+    path('tv-shows/', include('tv_shows.urls')),
+    path('accounts/', include('accounts.urls')),
+    path('recommendations/', include('recommendations.urls')),
+    
+    # API endpoints  
+    path('api/', include('movies.api_urls')),
     path('api/auth/', include('rest_framework.urls')),
-    path('api/', include('movies.urls')),
+    
+    # Admin
+    path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

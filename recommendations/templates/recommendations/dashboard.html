@@ -1,0 +1,697 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Recommendations - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/suggesterr.css' %}">
+{% endblock %}
+
+{% block header_search %}
+<div class="search-container">
+    <input type="text" class="search-input" placeholder="Search AI recommendations..." id="searchInput">
+</div>
+{% endblock %}
+
+{% block hero_section %}
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">AI-Powered Recommendations</h1>
+        <p class="hero-subtitle">Get personalized movie and TV show recommendations based on your mood and preferences</p>
+        
+        <!-- Hero actions -->
+        <div class="hero-actions">
+            <button id="getStartedBtn" class="btn btn-primary btn-lg" onclick="app.showOnboarding()">Get Started</button>
+        </div>
+    </div>
+    <div class="hero-background"></div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div id="dashboard">
+    <!-- AI Chat Assistant Button -->
+    <div class="chat-fab">
+        <button id="chatToggle" class="chat-toggle-btn" onclick="toggleChat()">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+    
+    <!-- AI Chat Assistant Modal -->
+    <div id="chatModal" class="chat-modal">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h3>AI Movie Assistant</h3>
+                <div class="chat-actions">
+                    <button class="chat-action-btn" onclick="clearChat()" title="Clear conversation">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="chat-close-btn" onclick="closeChat()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-message assistant">
+                    <div class="message-content">
+                        <p>Hi! I'm your AI movie assistant. I can help you discover great movies based on your preferences, mood, or interests. What would you like to watch today?</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <form id="chatForm" onsubmit="sendMessage(event)">
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chatInput" placeholder="Ask me about movies..." required>
+                        <button type="submit" class="chat-send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Recommendations Section -->
+    <section class="section" id="ai-section">
+        <div class="section-header">
+            <h2 class="section-title">AI Movie Recommendations</h2>
+            <button class="btn btn-secondary" onclick="app.refreshAIRecommendations()" style="margin-left: auto;">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        
+        <!-- Mood Selection -->
+        <div class="mood-selector" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">How are you feeling today?</h3>
+            <div class="mood-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="mood-btn active" data-mood="happy">😊 Happy</button>
+                <button class="mood-btn" data-mood="sad">😢 Sad</button>
+                <button class="mood-btn" data-mood="excited">🤩 Excited</button>
+                <button class="mood-btn" data-mood="relaxed">😌 Relaxed</button>
+                <button class="mood-btn" data-mood="romantic">💕 Romantic</button>
+                <button class="mood-btn" data-mood="adventurous">🗺️ Adventurous</button>
+                <button class="mood-btn" data-mood="thoughtful">🤔 Thoughtful</button>
+                <button class="mood-btn" data-mood="nostalgic">🎭 Nostalgic</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Movie Recommendations -->
+    <section class="section" id="ai-recommendations-section">
+        <div class="section-header">
+            <h2 class="section-title">AI Recommendations for You</h2>
+        </div>
+        <div class="movie-row" id="aiRecommendations">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Personalized Movie Recommendations -->
+    <section class="section" id="personalized-recommendations-section">
+        <div class="section-header">
+            <h2 class="section-title">Personalized Movie Picks</h2>
+        </div>
+        <div class="movie-row" id="personalizedRecommendations">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TV Show AI Recommendations -->
+    <section class="section" id="ai-tv-recommendations-section">
+        <div class="section-header">
+            <h2 class="section-title">AI TV Show Recommendations</h2>
+        </div>
+        <div class="movie-row" id="aiTVRecommendations">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Personalized TV Show Recommendations -->
+    <section class="section" id="personalized-tv-recommendations-section">
+        <div class="section-header">
+            <h2 class="section-title">Personalized TV Show Picks</h2>
+        </div>
+        <div class="movie-row" id="personalizedTVRecommendations">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- AI Recommendations modals (includes both movies and TV shows) -->
+{% include 'movies/partials/movie_details_modal.html' %}
+{% include 'movies/partials/movie_request_modal.html' %}
+{% include 'tv_shows/partials/tv_show_details_modal.html' %}
+{% include 'tv_shows/partials/tv_show_request_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chat functionality
+let isLoading = false;
+
+function toggleChat() {
+    const chatModal = document.getElementById('chatModal');
+    const chatToggle = document.getElementById('chatToggle');
+    
+    if (chatModal.style.display === 'flex') {
+        closeChat();
+    } else {
+        openChat();
+    }
+}
+
+function openChat() {
+    const chatModal = document.getElementById('chatModal');
+    const chatToggle = document.getElementById('chatToggle');
+    
+    chatModal.style.display = 'flex';
+    chatToggle.style.display = 'none';
+    
+    // Load chat history
+    loadChatHistory();
+    
+    // Focus on input
+    document.getElementById('chatInput').focus();
+}
+
+function closeChat() {
+    const chatModal = document.getElementById('chatModal');
+    const chatToggle = document.getElementById('chatToggle');
+    
+    chatModal.style.display = 'none';
+    chatToggle.style.display = 'flex';
+}
+
+function loadChatHistory() {
+    fetch('/recommendations/api/chat/history/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const chatMessages = document.getElementById('chatMessages');
+        
+        if (data.messages && data.messages.length > 0) {
+            // Clear default message
+            chatMessages.innerHTML = '';
+            
+            // Add messages
+            data.messages.forEach(message => {
+                addMessage(message.content, message.role);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error loading chat history:', error);
+    });
+}
+
+function sendMessage(event) {
+    event.preventDefault();
+    
+    if (isLoading) return;
+    
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessage(message, 'user');
+    
+    // Clear input
+    input.value = '';
+    
+    // Show loading
+    isLoading = true;
+    addLoadingMessage();
+    
+    // Send message to backend
+    fetch('/recommendations/api/chat/message/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Remove loading message
+        removeLoadingMessage();
+        
+        if (data.response) {
+            // Add AI response to chat with movie and TV show recommendations
+            addMessage(data.response, 'assistant', data.movie_recommendations, data.tv_show_recommendations);
+        } else {
+            addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        removeLoadingMessage();
+        addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    })
+    .finally(() => {
+        isLoading = false;
+    });
+}
+
+function addMessage(content, role, movieRecommendations = null, tvShowRecommendations = null) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+    
+    // Create the message content with text
+    let messageContent = `
+        <div class="message-content">
+            <p>${content.replace(/\n/g, '<br>')}</p>
+        </div>
+    `;
+    
+    // Create a recommendations container that will be below the text
+    let recommendationsContent = '';
+    
+    // Add movie recommendations if provided
+    if (movieRecommendations && movieRecommendations.length > 0) {
+        recommendationsContent += '<div class="movie-recommendations">';
+        movieRecommendations.forEach(movie => {
+            const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'Unknown';
+            const posterUrl = movie.poster_path || 'https://via.placeholder.com/150x225?text=No+Poster';
+            const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+            
+            recommendationsContent += `
+                <div class="movie-card" data-tmdb-id="${movie.tmdb_id}">
+                    <img src="${posterUrl}" alt="${movie.title}" class="movie-poster">
+                    <div class="movie-info">
+                        <h4 class="movie-title">${movie.title}</h4>
+                        <p class="movie-year">${year}</p>
+                        <p class="movie-rating">⭐ ${rating}</p>
+                        <p class="movie-overview">${movie.overview ? movie.overview.substring(0, 100) + '...' : 'No overview available'}</p>
+                        <div class="movie-actions">
+                            <button class="btn btn-primary btn-sm" onclick="requestMovieFromChat(${movie.tmdb_id})">
+                                <i class="fas fa-download"></i> Request
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="viewMovieDetails(${movie.tmdb_id})">
+                                <i class="fas fa-info-circle"></i> Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        recommendationsContent += '</div>';
+    }
+    
+    // Add TV show recommendations if provided
+    if (tvShowRecommendations && tvShowRecommendations.length > 0) {
+        recommendationsContent += '<div class="tv-show-recommendations">';
+        tvShowRecommendations.forEach(tvShow => {
+            const year = tvShow.first_air_date ? new Date(tvShow.first_air_date).getFullYear() : 'Unknown';
+            const posterUrl = tvShow.poster_path || 'https://via.placeholder.com/150x225?text=No+Poster';
+            const rating = tvShow.vote_average ? tvShow.vote_average.toFixed(1) : 'N/A';
+            const seasons = tvShow.number_of_seasons ? `${tvShow.number_of_seasons} seasons` : 'Unknown seasons';
+            
+            recommendationsContent += `
+                <div class="tv-show-card" data-tmdb-id="${tvShow.tmdb_id}">
+                    <img src="${posterUrl}" alt="${tvShow.title}" class="tv-show-poster">
+                    <div class="tv-show-info">
+                        <h4 class="tv-show-title">${tvShow.title}</h4>
+                        <p class="tv-show-year">${year}</p>
+                        <p class="tv-show-rating">⭐ ${rating}</p>
+                        <p class="tv-show-seasons">${seasons}</p>
+                        <p class="tv-show-overview">${tvShow.overview ? tvShow.overview.substring(0, 100) + '...' : 'No overview available'}</p>
+                        <div class="tv-show-actions">
+                            <button class="btn btn-primary btn-sm" onclick="requestTVShowFromChat(${tvShow.tmdb_id})">
+                                <i class="fas fa-download"></i> Request
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="viewTVShowDetails(${tvShow.tmdb_id})">
+                                <i class="fas fa-info-circle"></i> Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        recommendationsContent += '</div>';
+    }
+    
+    // Add recommendations container below the message if we have recommendations
+    if (recommendationsContent) {
+        messageContent += `<div class="recommendations-container">${recommendationsContent}</div>`;
+    }
+    
+    messageDiv.innerHTML = messageContent;
+    chatMessages.appendChild(messageDiv);
+}
+
+function addLoadingMessage() {
+    const chatMessages = document.getElementById('chatMessages');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'chat-message assistant loading-message';
+    loadingDiv.innerHTML = `
+        <div class="message-content">
+            <div class="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(loadingDiv);
+}
+
+function removeLoadingMessage() {
+    const loadingMessage = document.querySelector('.loading-message');
+    if (loadingMessage) {
+        loadingMessage.remove();
+    }
+}
+
+function clearChat() {
+    if (!confirm('Are you sure you want to clear the chat history?')) {
+        return;
+    }
+    
+    fetch('/recommendations/api/chat/clear/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Clear chat messages
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = `
+            <div class="chat-message assistant">
+                <div class="message-content">
+                    <p>Hi! I'm your AI movie assistant. I can help you discover great movies based on your preferences, mood, or interests. What would you like to watch today?</p>
+                </div>
+            </div>
+        `;
+    })
+    .catch(error => {
+        console.error('Error clearing chat:', error);
+    });
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Handle Enter key in chat input
+document.getElementById('chatInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(e);
+    }
+});
+
+// Functions for movie interactions from chat
+async function requestMovieFromChat(tmdbId) {
+    if (typeof app !== 'undefined' && app.requestMovie) {
+        // Use the existing app method if available
+        await app.requestMovie(tmdbId);
+    } else {
+        // Fallback implementation
+        try {
+            const response = await fetch(`/recommendations/api/movie/details/?tmdb_id=${tmdbId}`);
+            const data = await response.json();
+            
+            if (data.movie) {
+                // Populate and show the movie request modal
+                document.getElementById('requestMovieTitle').textContent = data.movie.title;
+                document.getElementById('requestMovieYear').textContent = data.movie.release_date ? new Date(data.movie.release_date).getFullYear() : 'Unknown';
+                document.getElementById('requestMovieOverview').textContent = data.movie.overview || 'No overview available';
+                
+                const posterUrl = data.movie.poster_path || 'https://via.placeholder.com/300x450?text=No+Poster';
+                document.getElementById('requestMoviePoster').src = posterUrl;
+                
+                // Load quality profiles for fallback
+                await loadQualityProfilesFallback();
+                
+                // Store movie ID for later use
+                window.currentRequestMovieId = tmdbId;
+                
+                // Show the modal
+                document.getElementById('movieRequestModal').style.display = 'block';
+            } else {
+                alert('Movie details not found');
+            }
+        } catch (error) {
+            console.error('Error loading movie details:', error);
+            alert('Error loading movie details');
+        }
+    }
+}
+
+async function loadQualityProfilesFallback() {
+    try {
+        const response = await fetch('/api/movies/quality_profiles/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (response.ok) {
+            const profiles = await response.json();
+            const select = document.getElementById('qualityProfile');
+            
+            // Clear existing options
+            select.innerHTML = '';
+            
+            if (profiles && profiles.length > 0) {
+                profiles.forEach(profile => {
+                    const option = document.createElement('option');
+                    option.value = profile.id;
+                    option.textContent = profile.name;
+                    select.appendChild(option);
+                });
+                
+                // Select first option by default
+                select.selectedIndex = 0;
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No quality profiles available';
+                select.appendChild(option);
+            }
+        } else {
+            throw new Error('Failed to load quality profiles');
+        }
+    } catch (error) {
+        console.error('Error loading quality profiles:', error);
+        const select = document.getElementById('qualityProfile');
+        select.innerHTML = '<option value="">Error loading profiles</option>';
+    }
+}
+
+// Add fallback modal close function
+if (typeof app === 'undefined') {
+    window.closeRequestModal = function() {
+        document.getElementById('movieRequestModal').style.display = 'none';
+        window.currentRequestMovieId = null;
+    };
+    
+    window.submitMovieRequest = async function() {
+        if (!window.currentRequestMovieId) {
+            alert('No movie selected');
+            return;
+        }
+        
+        const qualityProfileId = document.getElementById('qualityProfile').value;
+        const searchImmediately = document.getElementById('searchImmediately').checked;
+        
+        try {
+            const submitBtn = document.getElementById('submitRequestBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Requesting...';
+            
+            const requestData = {};
+            if (qualityProfileId) {
+                requestData.quality_profile_id = qualityProfileId;
+            }
+            if (!searchImmediately) {
+                requestData.search_immediately = false;
+            }
+            
+            const response = await fetch(`/api/movies/${window.currentRequestMovieId}/request_movie/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            if (response.ok) {
+                window.closeRequestModal();
+                alert('Movie requested successfully! It will be downloaded automatically.');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to request movie');
+            }
+        } catch (error) {
+            console.error('Error requesting movie:', error);
+            alert('Error requesting movie: ' + error.message);
+        } finally {
+            const submitBtn = document.getElementById('submitRequestBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-download"></i> Request Movie';
+        }
+    };
+}
+
+async function viewMovieDetails(tmdbId) {
+    if (typeof app !== 'undefined' && app.showMovieDetails) {
+        // Use the existing app method if available
+        await app.showMovieDetails(tmdbId);
+    } else {
+        // Fallback implementation - open movie request modal
+        await requestMovieFromChat(tmdbId);
+    }
+}
+
+// TV Show functions
+async function requestTVShowFromChat(tmdbId) {
+    if (typeof app !== 'undefined' && app.requestTVShow) {
+        // Use the existing app method if available
+        await app.requestTVShow(tmdbId);
+    } else {
+        // Fallback implementation
+        try {
+            const response = await fetch(`/recommendations/api/tv-show/details/?tmdb_id=${tmdbId}`);
+            const data = await response.json();
+            
+            if (data.tv_show) {
+                // Populate and show the TV show request modal
+                document.getElementById('requestTVTitle').textContent = data.tv_show.title;
+                document.getElementById('requestTVYear').textContent = data.tv_show.first_air_date ? new Date(data.tv_show.first_air_date).getFullYear() : 'Unknown';
+                document.getElementById('requestTVOverview').textContent = data.tv_show.overview || 'No overview available';
+                
+                const posterUrl = data.tv_show.poster_path || 'https://via.placeholder.com/300x450?text=No+Poster';
+                document.getElementById('requestTVPoster').src = posterUrl;
+                
+                // Load TV quality profiles for fallback
+                await loadTVQualityProfilesFallback();
+                
+                // Load seasons for TV show
+                await loadTVSeasonsFallback(data.tv_show);
+                
+                // Store TV show ID for later use
+                window.currentRequestTVShowId = tmdbId;
+                
+                // Show the modal
+                document.getElementById('tvRequestModal').style.display = 'block';
+            } else {
+                alert('TV show details not found');
+            }
+        } catch (error) {
+            console.error('Error loading TV show details:', error);
+            alert('Error loading TV show details');
+        }
+    }
+}
+
+async function loadTVQualityProfilesFallback() {
+    try {
+        const response = await fetch('/api/tv-shows/quality_profiles/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (response.ok) {
+            const profiles = await response.json();
+            const select = document.getElementById('tvQualityProfile');
+            
+            // Clear existing options
+            select.innerHTML = '';
+            
+            if (profiles && profiles.length > 0) {
+                profiles.forEach(profile => {
+                    const option = document.createElement('option');
+                    option.value = profile.id;
+                    option.textContent = profile.name;
+                    select.appendChild(option);
+                });
+                
+                // Select first option by default
+                select.selectedIndex = 0;
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No quality profiles available';
+                select.appendChild(option);
+            }
+        } else {
+            throw new Error('Failed to load TV quality profiles');
+        }
+    } catch (error) {
+        console.error('Error loading TV quality profiles:', error);
+        const select = document.getElementById('tvQualityProfile');
+        select.innerHTML = '<option value="">Error loading profiles</option>';
+    }
+}
+
+async function loadTVSeasonsFallback(tvShow) {
+    const seasonSelection = document.getElementById('seasonSelection');
+    seasonSelection.innerHTML = '';
+    
+    if (tvShow.number_of_seasons) {
+        for (let i = 1; i <= tvShow.number_of_seasons; i++) {
+            const seasonDiv = document.createElement('div');
+            seasonDiv.className = 'season-option';
+            seasonDiv.innerHTML = `
+                <label>
+                    <input type="checkbox" name="seasons" value="${i}" checked>
+                    Season ${i}
+                </label>
+            `;
+            seasonSelection.appendChild(seasonDiv);
+        }
+    }
+}
+
+async function viewTVShowDetails(tmdbId) {
+    if (typeof app !== 'undefined' && app.showTVShowDetails) {
+        // Use the existing app method if available
+        await app.showTVShowDetails(tmdbId);
+    } else {
+        // Fallback implementation - open TV show request modal
+        await requestTVShowFromChat(tmdbId);
+    }
+}
+</script>
+{% endblock %}
