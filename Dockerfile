@@ -8,11 +8,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies, including netcat
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     curl \
+    netcat-traditional \ 
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -51,14 +52,14 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Default command for production
 CMD ["gunicorn", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "3", \
-     "--worker-class", "sync", \
-     "--worker-connections", "1000", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "50", \
-     "--timeout", "30", \
-     "--keep-alive", "2", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "suggesterr.wsgi:application"]
+    "--bind", "0.0.0.0:8000", \
+    "--workers", "3", \
+    "--worker-class", "sync", \
+    "--worker-connections", "1000", \
+    "--max-requests", "1000", \
+    "--max-requests-jitter", "50", \
+    "--timeout", "30", \
+    "--keep-alive", "2", \
+    "--access-logfile", "-", \
+    "--error-logfile", "-", \
+    "suggesterr.wsgi:application"]
