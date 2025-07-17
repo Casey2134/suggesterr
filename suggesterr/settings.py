@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.HTTPSRedirectMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -61,6 +62,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.FamilyProfileMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
+    'core.middleware.ErrorLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'suggesterr.urls'
@@ -86,12 +90,36 @@ WSGI_APPLICATION = 'suggesterr.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Check if we're using PostgreSQL (Docker/Production)
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.parse(DATABASE_URL)
+        }
+    except ImportError:
+        # Fallback to manual PostgreSQL configuration if dj_database_url is not available
+        import urllib.parse as urlparse
+        url = urlparse.urlparse(DATABASE_URL)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': url.path[1:],
+                'USER': url.username,
+                'PASSWORD': url.password,
+                'HOST': url.hostname,
+                'PORT': url.port,
+            }
+        }
+else:
+    # Default to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
 
 # Password validation
@@ -151,21 +179,45 @@ REST_FRAMEWORK = {
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://localhost:8000",
+    "https://127.0.0.1:8000",
 ]
+
+# Add more trusted origins for Docker
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend([
+        "https://your-domain.com",
+        "https://www.your-domain.com",
+    ])
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
-# Celery (disabled for demo)
-# CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-# CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-# CELERY_ACCEPT_CONTENT = ['json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
+# Docker-specific CORS settings
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS.extend([
+        "https://your-domain.com",  # Add your production domain
+    ])
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+CELERY_BEAT_SCHEDULE = {
+    'sync-movie-availability': {
+        'task': 'movies.tasks.sync_movie_availability',
+        'schedule': 3600.0,  # Run every hour
+    },
+}
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -193,8 +245,14 @@ SONARR_API_KEY = os.getenv('SONARR_API_KEY')
 
 # Security settings for production
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG and os.getenv('FORCE_SSL', 'False').lower() == 'true'
+SESSION_COOKIE_SECURE = not DEBUG and os.getenv('FORCE_SSL', 'False').lower() == 'true'
+CSRF_COOKIE_SECURE = not DEBUG and os.getenv('FORCE_SSL', 'False').lower() == 'true'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Development server settings
+if DEBUG:
+    # Allow both HTTP and HTTPS in development
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_TZ = True

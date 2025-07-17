@@ -12,7 +12,15 @@
       "Bash(python manage.py:*)",
       "Bash(open test_auth_ui.html)",
       "Bash(python test_auth_api.py:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(chmod:*)",
+      "Bash(./create-release.sh:*)",
+      "Bash(docker system prune:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

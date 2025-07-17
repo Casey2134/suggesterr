@@ -1,10 +1,33 @@
+# Core Django packages
 Django==4.2.7
 djangorestframework==3.14.0
 django-cors-headers==4.3.1
+
+# Database and cache
+psycopg2-binary==2.9.9
+redis==5.0.1
+dj-database-url==2.1.0
+
+# HTTP requests
 requests==2.31.0
+
+# Environment management
 python-dotenv==1.0.0
+
+# TMDB API
 tmdbv3api==1.9.0
+
+# Background tasks
+celery==5.3.4
+
+# WSGI server for production
+gunicorn==21.2.0
+
+# Testing
 pytest==7.4.3
 pytest-django==4.7.0
 coverage==7.3.2
 factory-boy==3.3.0
+
+# Google AI
+google-generativeai==0.3.2

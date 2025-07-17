@@ -34,6 +34,7 @@
             <a href="{% url 'movies:list' %}" class="nav-link">Movies</a>
             <a href="{% url 'tv_shows:list' %}" class="nav-link">TV Shows</a>
             <a href="{% url 'recommendations:ai' %}" class="nav-link">AI</a>
+            <a href="{% url 'accounts:family_profiles' %}" class="nav-link">Family</a>
         </nav>
         
         <div class="user-actions">
@@ -271,6 +272,18 @@
     </script>
     <!-- Include the main app JavaScript -->
     <script src="{% static 'js/suggesterr-app.js' %}?v=6"></script>
+    
+    <!-- Include profile switcher for authenticated users -->
+    {% if user.is_authenticated %}
+    <script src="{% static 'js/profile-switcher.js' %}"></script>
+    <script src="{% static 'js/profile-content-filtering.js' %}"></script>
+    
+    <!-- Profile context data -->
+    {% load profile_tags %}
+    <script>
+        window.profileContext = {{ profile_context|jsonify }};
+    </script>
+    {% endif %}
 
     {% block extra_js %}{% endblock %}
 </body>

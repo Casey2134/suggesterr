@@ -15,11 +15,12 @@ This prevents context loss! Update this file IMMEDIATELY when creating important
 
 - **Virtual Environment Setup**: See below 🚨 READ THIS FIRST!
 - **Django Apps Structure**: See below 🏗️
-- **Security Guidelines**: See below 🔐 CRITICAL
-- **Testing Requirements**: See below 🧪 MANDATORY
-- **API Development**: See below 📡
-- **Database Best Practices**: See below 🗄️
-- **Frontend Architecture**: See below 🎨
+- **Database Architecture**: `/docs/DATABASE_ARCHITECTURE.md` 🗄️
+- **API Architecture**: `/docs/API_ARCHITECTURE.md` 📡
+- **Security Guidelines**: `/docs/SECURITY_CHECKLIST.md` 🔐 CRITICAL
+- **AI Integration**: `/docs/AI_INTEGRATION_ARCHITECTURE.md` 🤖
+- **Testing Strategy**: `/docs/TESTING_STRATEGY.md` 🧪 MANDATORY
+- **Frontend Architecture**: `/docs/FRONTEND_ARCHITECTURE.md` 🎨
 - **Code Quality Standards**: See below 📝
 
 ## Project Overview
@@ -309,3 +310,7 @@ recommendations/
 7. **Consider performance impact** of database changes
 8. **Review API consistency** with existing endpoints
 9. **Run all tests** to ensure nothing is broken (with venv activated)
+
+---
+
+This guide ensures consistent, secure, and maintainable code following Django best practices while preserving the existing architecture and patterns of the Suggesterr project.

@@ -36,3 +36,25 @@ class UserSettings(models.Model):
     
     def __str__(self):
         return f"{self.user.username} Settings"
+
+
+# Import family profile models (legacy)
+from .family_models import (
+    FamilyProfile,
+    ContentFilter,
+    ContentRequest,
+    ProfileLimits,
+    ProfileActivity,
+    ParentApprovedContent,
+)
+
+# Import new family group models
+from .family_group_models import (
+    FamilyGroup,
+    FamilyMembership,
+    UserContentFilter,
+    UserLimits,
+    UserActivity,
+    ApprovedContent,
+    FamilyInvitation,
+)
