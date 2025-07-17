@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Integration Tests</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test-suite { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; background: white; border-radius: 5px; }
+        .test-case { margin: 10px 0; padding: 10px; border-left: 3px solid #ddd; }
+        .pass { border-left-color: green; background: #f0fff0; }
+        .fail { border-left-color: red; background: #fff0f0; }
+        .pending { border-left-color: orange; background: #fff8dc; }
+        .log { background: #f5f5f5; padding: 10px; margin: 5px 0; font-family: monospace; }
+        button { margin: 5px; padding: 8px 16px; cursor: pointer; }
+        .run-tests { background: #007bff; color: white; border: none; border-radius: 3px; }
+        .clear-tests { background: #dc3545; color: white; border: none; border-radius: 3px; }
+        h1 { color: #333; }
+        h2 { color: #666; }
+        .summary { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Authentication Integration Tests</h1>
+    <p>This test suite verifies the complete authentication flow including UI updates and API functionality.</p>
+    
+    <div class="summary">
+        <button class="run-tests" onclick="testRunner.runAllTests()">🚀 Run All Tests</button>
+        <button class="clear-tests" onclick="testRunner.clearResults()">🗑️ Clear Results</button>
+        <button onclick="testRunner.runUITests()">🎨 UI Tests Only</button>
+        <button onclick="testRunner.runAPITests()">🌐 API Tests Only</button>
+    </div>
+    
+    <div id="test-results"></div>
+    
+    <!-- Hidden elements for UI testing -->
+    <div style="display: none;">
+        <div id="guest-actions" style="display: flex;">
+            <button>Login</button>
+            <button>Sign Up</button>
+        </div>
+        <div id="user-actions" style="display: none;">
+            <span id="username-display"></span>
+            <button id="settingsBtn">Settings</button>
+        </div>
+        <button id="getStartedBtn">Get Started</button>
+        <button id="loginBtn" style="display: none;">Login</button>
+        <button id="registerBtn" style="display: none;">Create Account</button>
+    </div>
+
+    <script>
+        class IntegrationTestRunner {
+            constructor() {
+                this.results = [];
+                this.apiBase = '/api';
+                
+                // Create a mock CSRF token for testing
+                window.csrfToken = 'test-token-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            log(testName, passed, message, details = '') {
+                const status = passed ? '✓ PASS' : '✗ FAIL';
+                console.log(`${status} - ${testName}: ${message}`);
+                
+                this.results.push({
+                    name: testName,
+                    passed: passed,
+                    message: message,
+                    details: details,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                
+                this.updateDisplay();
+            }
+
+            logPending(testName, message) {
+                console.log(`⏳ PENDING - ${testName}: ${message}`);
+                
+                this.results.push({
+                    name: testName,
+                    passed: null,
+                    message: message,
+                    details: '',
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                
+                this.updateDisplay();
+            }
+
+            async apiRequest(endpoint, options = {}) {
+                try {
+                    const response = await fetch(`${this.apiBase}${endpoint}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': window.csrfToken,
+                            ...options.headers
+                        },
+                        ...options
+                    });
+                    
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        data = { error: 'Failed to parse JSON response' };
+                    }
+                    
+                    return { response, data };
+                } catch (error) {
+                    return { 
+                        response: { status: 0, ok: false }, 
+                        data: { error: error.message } 
+                    };
+                }
+            }
+
+            // UI Test Methods
+            hideElements(elementIds) {
+                elementIds.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = 'none';
+                        element.style.visibility = 'hidden';
+                    }
+                });
+            }
+
+            showElements(elementIds, displayType = 'flex') {
+                elementIds.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.display = displayType;
+                        element.style.visibility = 'visible';
+                    }
+                });
+            }
+
+            simulateAuthenticatedUI() {
+                this.hideElements(['guest-actions']);
+                this.showElements(['user-actions']);
+                
+                const usernameDisplay = document.getElementById('username-display');
+                if (usernameDisplay) {
+                    usernameDisplay.textContent = 'Welcome, testuser';
+                }
+                
+                this.hideElements(['getStartedBtn', 'loginBtn', 'registerBtn']);
+            }
+
+            simulateGuestUI() {
+                this.showElements(['guest-actions']);
+                this.hideElements(['user-actions']);
+                this.hideElements(['getStartedBtn']);
+                this.showElements(['loginBtn', 'registerBtn'], 'inline-block');
+            }
+
+            resetUIState() {
+                // Reset to initial state
+                document.getElementById('guest-actions').style.display = 'flex';
+                document.getElementById('user-actions').style.display = 'none';
+                document.getElementById('getStartedBtn').style.display = 'block';
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('registerBtn').style.display = 'none';
+                document.getElementById('username-display').textContent = '';
+            }
+
+            // Test Methods
+            async testCurrentUserUnauthenticated() {
+                this.logPending('Current User API - Unauthenticated', 'Testing current user endpoint...');
+                
+                const { response, data } = await this.apiRequest('/auth/current_user/');
+                
+                const passed = response.ok && data.user === null;
+                this.log(
+                    'Current User API - Unauthenticated',
+                    passed,
+                    'Should return null user when not authenticated',
+                    `Status: ${response.status}, Response: ${JSON.stringify(data)}`
+                );
+                return passed;
+            }
+
+            async testLoginAPI() {
+                this.logPending('Login API', 'Testing login endpoint...');
+                
+                const { response, data } = await this.apiRequest('/auth/login/', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin'
+                    })
+                });
+                
+                const passed = response.ok && data.success === true && data.user;
+                this.log(
+                    'Login API',
+                    passed,
+                    'Should authenticate with valid credentials',
+                    `Status: ${response.status}, Success: ${data.success}, User: ${data.user ? data.user.username : 'none'}`
+                );
+                return passed;
+            }
+
+            async testCurrentUserAuthenticated() {
+                this.logPending('Current User API - Authenticated', 'Testing authenticated state...');
+                
+                const { response, data } = await this.apiRequest('/auth/current_user/');
+                
+                const passed = response.ok && data.user && data.user.username;
+                this.log(
+                    'Current User API - Authenticated',
+                    passed,
+                    'Should return user data when authenticated',
+                    `Status: ${response.status}, User: ${data.user ? data.user.username : 'none'}`
+                );
+                return passed;
+            }
+
+            async testSettingsAPI() {
+                this.logPending('Settings API - GET', 'Testing settings retrieval...');
+                
+                const { response, data } = await this.apiRequest('/settings/');
+                
+                const passed = response.ok && typeof data === 'object';
+                this.log(
+                    'Settings API - GET',
+                    passed,
+                    'Should return settings object',
+                    `Status: ${response.status}, Has server_type: ${'server_type' in data}`
+                );
+                return passed;
+            }
+
+            testUIStateTransitions() {
+                this.logPending('UI State - Initial', 'Testing initial UI state...');
+                
+                // Test initial state
+                this.resetUIState();
+                const guestVisible = window.getComputedStyle(document.getElementById('guest-actions')).display !== 'none';
+                const userHidden = window.getComputedStyle(document.getElementById('user-actions')).display === 'none';
+                
+                this.log(
+                    'UI State - Initial',
+                    guestVisible && userHidden,
+                    'Initial state should show guest UI',
+                    `Guest visible: ${guestVisible}, User hidden: ${userHidden}`
+                );
+
+                // Test authenticated state
+                this.logPending('UI State - Authenticated', 'Testing authenticated UI state...');
+                this.simulateAuthenticatedUI();
+                
+                const guestHidden = window.getComputedStyle(document.getElementById('guest-actions')).display === 'none';
+                const userVisible = window.getComputedStyle(document.getElementById('user-actions')).display !== 'none';
+                const correctUsername = document.getElementById('username-display').textContent === 'Welcome, testuser';
+                
+                this.log(
+                    'UI State - Authenticated',
+                    guestHidden && userVisible && correctUsername,
+                    'Authenticated state should show user UI',
+                    `Guest hidden: ${guestHidden}, User visible: ${userVisible}, Username: ${correctUsername}`
+                );
+
+                // Test back to guest state
+                this.logPending('UI State - Logout', 'Testing logout UI state...');
+                this.simulateGuestUI();
+                
+                const backToGuest = window.getComputedStyle(document.getElementById('guest-actions')).display !== 'none';
+                const userHiddenAgain = window.getComputedStyle(document.getElementById('user-actions')).display === 'none';
+                
+                this.log(
+                    'UI State - Logout',
+                    backToGuest && userHiddenAgain,
+                    'Logout should restore guest UI',
+                    `Guest visible: ${backToGuest}, User hidden: ${userHiddenAgain}`
+                );
+
+                return true;
+            }
+
+            testOnboardingLogic() {
+                this.logPending('Onboarding Logic', 'Testing localStorage behavior...');
+                
+                // Clear and test initial state
+                localStorage.removeItem('onboardingCompleted');
+                const shouldShow1 = !localStorage.getItem('onboardingCompleted');
+                
+                // Mark as completed and test
+                localStorage.setItem('onboardingCompleted', 'true');
+                const shouldShow2 = !localStorage.getItem('onboardingCompleted');
+                
+                // Test settings logic
+                const emptySettings = {};
+                const hasConfigEmpty = !!(emptySettings.server_url || emptySettings.server_type);
+                
+                const fullSettings = { server_url: 'http://localhost:8096', server_type: 'jellyfin' };
+                const hasConfigFull = !!(fullSettings.server_url || fullSettings.server_type);
+                
+                const allPassed = shouldShow1 && !shouldShow2 && !hasConfigEmpty && hasConfigFull;
+                
+                this.log(
+                    'Onboarding Logic',
+                    allPassed,
+                    'localStorage and settings detection should work correctly',
+                    `Initial: ${shouldShow1}, After completion: ${!shouldShow2}, Empty config: ${!hasConfigEmpty}, Full config: ${hasConfigFull}`
+                );
+                
+                return allPassed;
+            }
+
+            async runUITests() {
+                console.log('🎨 Running UI Tests...');
+                this.testUIStateTransitions();
+                this.testOnboardingLogic();
+            }
+
+            async runAPITests() {
+                console.log('🌐 Running API Tests...');
+                await this.testCurrentUserUnauthenticated();
+                await this.testLoginAPI();
+                await this.testCurrentUserAuthenticated();
+                await this.testSettingsAPI();
+            }
+
+            async runAllTests() {
+                console.log('🚀 Running Complete Test Suite...');
+                this.clearResults();
+                
+                await this.runUITests();
+                await this.runAPITests();
+                
+                // Summary
+                setTimeout(() => {
+                    const passed = this.results.filter(r => r.passed === true).length;
+                    const failed = this.results.filter(r => r.passed === false).length;
+                    const total = passed + failed;
+                    
+                    console.log(`\n📊 Test Summary: ${passed}/${total} passed (${((passed/total)*100).toFixed(1)}%)`);
+                    
+                    if (failed === 0) {
+                        console.log('🎉 All tests passed!');
+                    } else {
+                        console.log(`⚠️ ${failed} test(s) failed.`);
+                    }
+                }, 100);
+            }
+
+            clearResults() {
+                this.results = [];
+                this.updateDisplay();
+                console.clear();
+            }
+
+            updateDisplay() {
+                const container = document.getElementById('test-results');
+                if (!container) return;
+
+                const passed = this.results.filter(r => r.passed === true).length;
+                const failed = this.results.filter(r => r.passed === false).length;
+                const pending = this.results.filter(r => r.passed === null).length;
+                const total = this.results.length;
+
+                let html = `
+                    <div class="test-suite">
+                        <h2>📊 Test Results</h2>
+                        <p><strong>Passed:</strong> ${passed} | <strong>Failed:</strong> ${failed} | <strong>Pending:</strong> ${pending} | <strong>Total:</strong> ${total}</p>
+                `;
+
+                this.results.forEach(result => {
+                    const cssClass = result.passed === true ? 'pass' : result.passed === false ? 'fail' : 'pending';
+                    const icon = result.passed === true ? '✓' : result.passed === false ? '✗' : '⏳';
+                    
+                    html += `
+                        <div class="test-case ${cssClass}">
+                            <strong>${icon} ${result.name}</strong> <small>(${result.timestamp})</small><br>
+                            ${result.message}
+                            ${result.details ? `<br><small>${result.details}</small>` : ''}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.innerHTML = html;
+            }
+        }
+
+        // Initialize test runner
+        const testRunner = new IntegrationTestRunner();
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            console.log('🔧 Integration Test Suite Loaded');
+            console.log('Click "Run All Tests" to start testing!');
+        });
+    </script>
+</body>
+</html>

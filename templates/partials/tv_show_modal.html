@@ -1,0 +1,76 @@
+<!-- TV Show Details Modal -->
+<div class="modal" id="tvShowModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="tvShowTitle">TV Show Title</h2>
+            <button class="modal-close" onclick="closeTVShowModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="tvShowDetails">
+            <!-- TV show details will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<style>
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    background-color: var(--bg-card);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 1rem;
+}
+</style>
+
+<script>
+function closeTVShowModal() {
+    document.getElementById('tvShowModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('tvShowModal');
+    if (event.target === modal) {
+        closeTVShowModal();
+    }
+});
+</script>

@@ -1,0 +1,48 @@
+<!-- Movie Request Modal -->
+<div class="modal" id="movieRequestModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="requestModalTitle">Request Movie</h2>
+            <button class="modal-close" onclick="app.closeRequestModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="requestModalContent">
+                <div class="request-form">
+                    <div class="movie-info-header">
+                        <img id="requestMoviePoster" src="" alt="Movie Poster" class="request-poster">
+                        <div class="movie-details">
+                            <h3 id="requestMovieTitle"></h3>
+                            <p id="requestMovieYear"></p>
+                            <p id="requestMovieOverview"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="request-options">
+                        <div class="form-group">
+                            <label for="qualityProfile">Quality Profile:</label>
+                            <select id="qualityProfile" class="form-select">
+                                <option value="">Loading quality profiles...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="searchImmediately" checked>
+                                Search for movie immediately
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" onclick="app.closeRequestModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="app.submitMovieRequest()" id="submitRequestBtn">
+                            <i class="fas fa-download"></i> Request Movie
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

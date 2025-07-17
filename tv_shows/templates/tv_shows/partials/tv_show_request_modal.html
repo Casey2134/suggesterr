@@ -1,0 +1,55 @@
+<!-- TV Show Request Modal -->
+<div class="modal" id="tvRequestModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="tvRequestModalTitle">Request TV Show</h2>
+            <button class="modal-close" onclick="app.closeTVRequestModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="tvRequestModalContent">
+                <div class="request-form">
+                    <div class="tv-info-header">
+                        <img id="requestTVPoster" src="" alt="TV Show Poster" class="request-poster">
+                        <div class="tv-details">
+                            <h3 id="requestTVTitle"></h3>
+                            <p id="requestTVYear"></p>
+                            <p id="requestTVOverview"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="request-options">
+                        <div class="form-group">
+                            <label for="tvQualityProfile">Quality Profile:</label>
+                            <select id="tvQualityProfile" class="form-select">
+                                <option value="">Loading quality profiles...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Season Selection:</label>
+                            <div id="seasonSelection" class="season-selection">
+                                <!-- Seasons will be populated dynamically -->
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="tvSearchImmediately" checked>
+                                Search for episodes immediately
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" onclick="app.closeTVRequestModal()">Cancel</button>
+                        <button class="btn btn-primary" onclick="app.submitTVRequest()" id="submitTVRequestBtn">
+                            <i class="fas fa-download"></i> Request TV Show
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

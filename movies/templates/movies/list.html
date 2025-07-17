@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Movies - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/suggesterr.css' %}">
+{% endblock %}
+
+{% block header_search %}
+<div class="search-container">
+    <input type="text" class="search-input" placeholder="Search movies..." id="searchInput">
+</div>
+{% endblock %}
+
+{% block hero_section %}
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">Discover Amazing Movies</h1>
+        <p class="hero-subtitle">Explore popular, top-rated, and upcoming movies from around the world</p>
+        
+        <!-- Hero actions -->
+        <div class="hero-actions">
+            <button id="getStartedBtn" class="btn btn-primary btn-lg" onclick="app.showOnboarding()">Get Started</button>
+        </div>
+    </div>
+    <div class="hero-background"></div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div id="dashboard">
+    <!-- Popular Movies Section -->
+    <section class="section" id="popular-section">
+        <div class="section-header">
+            <h2 class="section-title">Popular Movies</h2>
+            <a href="{% url 'movies:popular' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="moviesPopular">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Rated Movies Section -->
+    <section class="section" id="top-rated-section">
+        <div class="section-header">
+            <h2 class="section-title">Top Rated Movies</h2>
+            <a href="{% url 'movies:top_rated' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="moviesTopRated">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Now Playing Movies Section -->
+    <section class="section" id="now-playing-section">
+        <div class="section-header">
+            <h2 class="section-title">Now Playing</h2>
+        </div>
+        <div class="movie-row" id="moviesNowPlaying">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upcoming Movies Section -->
+    <section class="section" id="upcoming-section">
+        <div class="section-header">
+            <h2 class="section-title">Upcoming Movies</h2>
+        </div>
+        <div class="movie-row" id="moviesUpcoming">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Results Section (hidden by default) -->
+    <section class="section" id="search-results-section" style="display: none;">
+        <div class="section-header">
+            <h2 class="section-title">Search Results</h2>
+        </div>
+        <div class="movie-row" id="searchResults">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Movie-specific modals -->
+{% include 'movies/partials/movie_details_modal.html' %}
+{% include 'movies/partials/movie_request_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Page-specific JavaScript would go here if needed -->
+{% endblock %}

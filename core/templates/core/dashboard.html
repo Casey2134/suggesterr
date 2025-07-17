@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/suggesterr.css' %}">
+{% endblock %}
+
+{% block hero_section %}
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">Discover Your Next Favorite</h1>
+        <p class="hero-subtitle">AI-powered movie and TV show recommendations tailored just for you</p>
+        
+        <!-- Hero actions for authenticated users -->
+        <div class="hero-actions">
+            <button id="getStartedBtn" class="btn btn-primary btn-lg" onclick="app.showOnboarding()">Get Started</button>
+        </div>
+    </div>
+    <div class="hero-background"></div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Popular Movies Section -->
+    <section class="section" id="popular-section">
+        <div class="section-header">
+            <h2 class="section-title">Popular Movies</h2>
+            <a href="{% url 'movies:popular' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="popularMovies">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recently Added Movies Section -->
+    <section class="section" id="recently-added-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-clock"></i> Recently Added
+            </h2>
+            <span class="section-subtitle">New movies from your media server</span>
+        </div>
+        <div class="movie-row" id="recentlyAddedMovies">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Rated Movies Section -->
+    <section class="section" id="top-rated-section">
+        <div class="section-header">
+            <h2 class="section-title">Top Rated Movies</h2>
+            <a href="{% url 'movies:popular' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="topRatedMovies">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular TV Shows Section -->
+    <section class="section" id="popular-tv-section">
+        <div class="section-header">
+            <h2 class="section-title">Popular TV Shows</h2>
+            <a href="{% url 'movies:popular' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="popularTVShows">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Rated TV Shows Section -->
+    <section class="section" id="top-rated-tv-section">
+        <div class="section-header">
+            <h2 class="section-title">Top Rated TV Shows</h2>
+            <a href="{% url 'movies:popular' %}" class="view-all">View All</a>
+        </div>
+        <div class="movie-row" id="topRatedTVShows">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Genre Sections Container -->
+    <div id="genre-sections"></div>
+
+    <!-- Search Results Section (hidden by default) -->
+    <section class="section" id="search-results-section" style="display: none;">
+        <div class="section-header">
+            <h2 class="section-title">Search Results</h2>
+        </div>
+        <div class="movie-row" id="searchResults">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- Dashboard modals (includes both movies and TV shows) -->
+{% include 'movies/partials/movie_details_modal.html' %}
+{% include 'movies/partials/movie_request_modal.html' %}
+{% include 'tv_shows/partials/tv_show_details_modal.html' %}
+{% include 'tv_shows/partials/tv_show_request_modal.html' %}
+{% endblock %}

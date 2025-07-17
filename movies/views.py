@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -8,21 +9,24 @@ from django.db.models import Q, Avg
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+import logging
 from .models import (
-    Movie, Genre, UserRating, UserWatchlist, MovieRecommendation,
-    TVShow, TVShowRating, TVShowWatchlist, TVShowRecommendation, UserSettings
+    Movie, UserRating, UserWatchlist, MovieRecommendation
 )
+from core.models import Genre
+from accounts.models import UserSettings
+from recommendations.models import UserNegativeFeedback
 from .serializers import (
     MovieSerializer, GenreSerializer, UserRatingSerializer,
-    UserWatchlistSerializer, MovieRecommendationSerializer,
-    TVShowSerializer, TVShowRatingSerializer, TVShowWatchlistSerializer,
-    TVShowRecommendationSerializer, UserSettingsSerializer
+    UserWatchlistSerializer, MovieRecommendationSerializer
 )
 from .services import MovieService, RecommendationService, TVShowService
 from .tmdb_service import TMDBService
 from .tmdb_tv_service import TMDBTVService
 from .gemini_service import GeminiService
-from integrations.services import JellyfinService, PlexService
+from integrations.services import JellyfinService, PlexService, RadarrService
+
+logger = logging.getLogger(__name__)
 
 
 def get_user_library_context(user, limit=100):
@@ -56,6 +60,33 @@ def get_user_library_context(user, limit=100):
     return library_movies
 
 
+def get_user_negative_feedback(user, content_type=None):
+    """Get user's negative feedback (not interested items) for filtering"""
+    queryset = UserNegativeFeedback.objects.filter(user=user)
+    if content_type:
+        queryset = queryset.filter(content_type=content_type)
+    return list(queryset.values_list('tmdb_id', flat=True))
+
+
+def filter_negative_feedback(items, user, content_type):
+    """Filter out items that user marked as 'not interested'"""
+    if not user.is_authenticated:
+        return items
+    
+    negative_tmdb_ids = get_user_negative_feedback(user, content_type)
+    if not negative_tmdb_ids:
+        return items
+    
+    # Filter out items with TMDB IDs in the negative feedback list
+    filtered_items = []
+    for item in items:
+        item_tmdb_id = item.get('id') or item.get('tmdb_id')
+        if item_tmdb_id not in negative_tmdb_ids:
+            filtered_items.append(item)
+    
+    return filtered_items
+
+
 class GenreViewSet(viewsets.ViewSet):
     
     def __init__(self, *args, **kwargs):
@@ -84,6 +115,12 @@ class MovieViewSet(viewsets.ViewSet):
         else:
             movies = self.tmdb_service.get_popular_movies(page)
         
+        # Filter out negative feedback items for authenticated users
+        if movies and 'results' in movies:
+            movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+            # Add local status information (availability and request status)
+            movies['results'] = self._add_local_status(movies['results'])
+        
         return Response(movies)
     
     def retrieve(self, request, pk=None):
@@ -102,12 +139,24 @@ class MovieViewSet(viewsets.ViewSet):
     def popular(self, request):
         page = int(request.query_params.get('page', 1))
         movies = self.tmdb_service.get_popular_movies(page)
+        
+        # Filter out negative feedback items
+        if movies and 'results' in movies:
+            movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+            movies['results'] = self._add_local_status(movies['results'])
+        
         return Response(movies)
     
     @action(detail=False, methods=['get'])
     def top_rated(self, request):
         page = int(request.query_params.get('page', 1))
         movies = self.tmdb_service.get_top_rated_movies(page)
+        
+        # Filter out negative feedback items
+        if movies and 'results' in movies:
+            movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+            movies['results'] = self._add_local_status(movies['results'])
+        
         return Response(movies)
     
     @action(detail=False, methods=['get'])
@@ -121,6 +170,12 @@ class MovieViewSet(viewsets.ViewSet):
             genre_id = int(genre_id)
             page = int(request.query_params.get('page', 1))
             movies = self.tmdb_service.get_movies_by_genre(genre_id, page)
+            
+            # Filter out negative feedback items and add local status
+            if movies and 'results' in movies:
+                movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+                movies['results'] = self._add_local_status(movies['results'])
+            
             return Response(movies)
         except ValueError:
             return Response({'error': 'Invalid genre ID'}, status=status.HTTP_400_BAD_REQUEST)
@@ -129,12 +184,24 @@ class MovieViewSet(viewsets.ViewSet):
     def now_playing(self, request):
         page = int(request.query_params.get('page', 1))
         movies = self.tmdb_service.get_now_playing_movies(page)
+        
+        # Filter out negative feedback items and add local status
+        if movies and 'results' in movies:
+            movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+            movies['results'] = self._add_local_status(movies['results'])
+        
         return Response(movies)
     
     @action(detail=False, methods=['get'])
     def upcoming(self, request):
         page = int(request.query_params.get('page', 1))
         movies = self.tmdb_service.get_upcoming_movies(page)
+        
+        # Filter out negative feedback items and add local status
+        if movies and 'results' in movies:
+            movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+            movies['results'] = self._add_local_status(movies['results'])
+        
         return Response(movies)
     
     @action(detail=False, methods=['get'])
@@ -145,6 +212,12 @@ class MovieViewSet(viewsets.ViewSet):
         
         page = int(request.query_params.get('page', 1))
         movies = self.tmdb_service.search_movies(query, page)
+        
+        # Filter out negative feedback items and add local status
+        if movies and 'results' in movies:
+            movies['results'] = filter_negative_feedback(movies['results'], request.user, 'movie')
+            movies['results'] = self._add_local_status(movies['results'])
+        
         return Response(movies)
     
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
@@ -155,8 +228,16 @@ class MovieViewSet(viewsets.ViewSet):
             if not movie:
                 return Response({'error': 'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
             
+            # Get quality profile from request data
+            quality_profile_id = request.data.get('quality_profile_id')
+            if quality_profile_id:
+                try:
+                    quality_profile_id = int(quality_profile_id)
+                except ValueError:
+                    return Response({'error': 'Invalid quality profile ID'}, status=status.HTTP_400_BAD_REQUEST)
+            
             movie_service = MovieService()
-            success = movie_service.request_movie_on_radarr(movie)
+            success = movie_service.request_movie_on_radarr(movie, quality_profile_id)
             
             if success:
                 return Response({'message': 'Movie requested successfully'})
@@ -178,12 +259,19 @@ class MovieViewSet(viewsets.ViewSet):
             'year_range': request.query_params.get('year_range', '2015-2024')
         }
         
-        # Get library context if user is authenticated
+        # Get library context and negative feedback if user is authenticated
         library_context = []
+        negative_feedback_context = []
         if request.user.is_authenticated:
             library_context = get_user_library_context(request.user)
+            negative_feedback_context = get_user_negative_feedback(request.user, 'movie')
         
-        movies = gemini_service.get_personalized_recommendations(preferences, library_context)
+        movies = gemini_service.get_personalized_recommendations(
+            preferences, library_context, negative_feedback_context
+        )
+        
+        # Additional client-side filtering in case AI doesn't fully exclude them
+        movies = filter_negative_feedback(movies, request.user, 'movie')
         return Response(movies)
     
     @action(detail=False, methods=['get'])
@@ -192,12 +280,17 @@ class MovieViewSet(viewsets.ViewSet):
         mood = request.query_params.get('mood', 'happy')
         gemini_service = GeminiService()
         
-        # Get library context if user is authenticated
+        # Get library context and negative feedback if user is authenticated
         library_context = []
+        negative_feedback_context = []
         if request.user.is_authenticated:
             library_context = get_user_library_context(request.user)
+            negative_feedback_context = get_user_negative_feedback(request.user, 'movie')
         
-        movies = gemini_service.get_mood_based_recommendations(mood, library_context)
+        movies = gemini_service.get_mood_based_recommendations(mood, library_context, negative_feedback_context)
+        
+        # Filter out negative feedback items
+        movies = filter_negative_feedback(movies, request.user, 'movie')
         return Response(movies)
     
     @action(detail=False, methods=['get'])
@@ -209,13 +302,129 @@ class MovieViewSet(viewsets.ViewSet):
         
         gemini_service = GeminiService()
         
-        # Get library context if user is authenticated
+        # Get library context and negative feedback if user is authenticated
         library_context = []
+        negative_feedback_context = []
         if request.user.is_authenticated:
             library_context = get_user_library_context(request.user)
+            negative_feedback_context = get_user_negative_feedback(request.user, 'movie')
         
-        movies = gemini_service.get_similar_movies(movie_title, library_context)
+        movies = gemini_service.get_similar_movies(movie_title, library_context, negative_feedback_context)
+        
+        # Filter out negative feedback items
+        movies = filter_negative_feedback(movies, request.user, 'movie')
         return Response(movies)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def recently_added(self, request):
+        """Get recently added movies from user's media server"""
+        # Get recently added movies from user's library
+        recently_added = get_user_library_context(request.user, limit=50)
+        
+        if not recently_added:
+            return Response([])
+        
+        # Convert library context format to movie card format
+        movies = []
+        for movie in recently_added:
+            # Create a movie object that matches expected format
+            movie_data = {
+                'id': movie.get('tmdb_id'),
+                'tmdb_id': movie.get('tmdb_id'),
+                'title': movie.get('title'),
+                'overview': movie.get('overview', ''),
+                'poster_path': movie.get('poster_path'),
+                'backdrop_path': movie.get('backdrop_path', ''),
+                'release_date': movie.get('release_date') or str(movie.get('year', '')),
+                'vote_average': movie.get('vote_average', 0),
+                'vote_count': movie.get('vote_count', 0),
+                'genres': movie.get('genres', []),
+                'date_added': movie.get('date_added'),
+                'recently_added': True
+            }
+            
+            # Only add movies that have a TMDB ID (needed for proper display)
+            if movie_data['tmdb_id']:
+                movies.append(movie_data)
+        
+        # Filter out negative feedback items and add local status
+        movies = filter_negative_feedback(movies, request.user, 'movie')
+        movies = self._add_local_status(movies)
+        return Response(movies)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def quality_profiles(self, request):
+        """Get available quality profiles from Radarr"""
+        radarr_service = RadarrService()
+        profiles = radarr_service.get_quality_profiles()
+        return Response(profiles)
+    
+    def _add_local_status(self, movies_list):
+        """Add local database status (requested/available) to movie objects"""
+        if not movies_list:
+            return movies_list
+        
+        # Get TMDB IDs from the movie list (handle both 'id' and 'tmdb_id' fields)
+        tmdb_ids = []
+        for movie in movies_list:
+            tmdb_id = movie.get('id') or movie.get('tmdb_id')
+            if tmdb_id:
+                tmdb_ids.append(tmdb_id)
+        
+        # Fetch local movie records
+        local_movies = {}
+        if tmdb_ids:
+            movie_queryset = Movie.objects.filter(tmdb_id__in=tmdb_ids)
+            local_movies = {movie.tmdb_id: movie for movie in movie_queryset}
+        
+        # Check Radarr for existing movies (batch check for efficiency)
+        radarr_service = RadarrService()
+        radarr_movies = radarr_service.get_radarr_movies_by_tmdb_ids(tmdb_ids)
+        
+        # Add local status to each movie
+        for movie in movies_list:
+            tmdb_id = movie.get('id') or movie.get('tmdb_id')
+            
+            # Check if movie is in Radarr (either from local DB or direct Radarr check)
+            requested_on_radarr = False
+            if tmdb_id and tmdb_id in local_movies:
+                local_movie = local_movies[tmdb_id]
+                requested_on_radarr = local_movie.requested_on_radarr
+            
+            # If not in local DB but exists in Radarr, update local DB
+            if not requested_on_radarr and tmdb_id in radarr_movies:
+                requested_on_radarr = True
+                # Update local database
+                try:
+                    # Handle release_date properly - convert year to date or set to None
+                    release_date = movie.get('release_date')
+                    if release_date and len(str(release_date)) == 4:  # Just a year
+                        try:
+                            release_date = f"{release_date}-01-01"  # Convert year to YYYY-01-01
+                        except:
+                            release_date = None
+                    elif release_date and not isinstance(release_date, str):
+                        release_date = None
+                    
+                    movie_obj, created = Movie.objects.get_or_create(
+                        tmdb_id=tmdb_id,
+                        defaults={
+                            'title': movie.get('title', ''),
+                            'overview': movie.get('overview', ''),
+                            'release_date': release_date,
+                            'poster_path': movie.get('poster_path', ''),
+                            'vote_average': movie.get('vote_average', 0),
+                            'vote_count': movie.get('vote_count', 0)
+                        }
+                    )
+                    movie_obj.requested_on_radarr = True
+                    movie_obj.save()
+                except Exception as e:
+                    logger.error(f"Error updating movie status from Radarr: {e}")
+            
+            movie['requested_on_radarr'] = requested_on_radarr
+        
+        return movies_list
 
 
 class UserRatingViewSet(viewsets.ModelViewSet):
@@ -240,6 +449,8 @@ class UserWatchlistViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+
+
 class RecommendationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = MovieRecommendationSerializer
     permission_classes = [IsAuthenticated]
@@ -262,203 +473,11 @@ class RecommendationViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class TVShowViewSet(viewsets.ViewSet):
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tmdb_tv_service = TMDBTVService()
-    
-    def list(self, request):
-        """Get all TV shows (popular by default)"""
-        page = int(request.query_params.get('page', 1))
-        search = request.query_params.get('search')
-        
-        if search:
-            tv_shows = self.tmdb_tv_service.search_tv_shows(search, page)
-        else:
-            tv_shows = self.tmdb_tv_service.get_popular_tv_shows(page)
-        
-        return Response(tv_shows)
-    
-    def retrieve(self, request, pk=None):
-        """Get a specific TV show by ID"""
-        try:
-            tv_show_id = int(pk)
-            tv_show = self.tmdb_tv_service.get_tv_show_details(tv_show_id)
-            if tv_show:
-                return Response(tv_show)
-            else:
-                return Response({'error': 'TV show not found'}, status=status.HTTP_404_NOT_FOUND)
-        except ValueError:
-            return Response({'error': 'Invalid TV show ID'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=False, methods=['get'])
-    def popular(self, request):
-        page = int(request.query_params.get('page', 1))
-        tv_shows = self.tmdb_tv_service.get_popular_tv_shows(page)
-        return Response(tv_shows)
-    
-    @action(detail=False, methods=['get'])
-    def top_rated(self, request):
-        page = int(request.query_params.get('page', 1))
-        tv_shows = self.tmdb_tv_service.get_top_rated_tv_shows(page)
-        return Response(tv_shows)
-    
-    @action(detail=False, methods=['get'])
-    def by_genre(self, request):
-        genre_id = request.query_params.get('genre_id')
-        if not genre_id:
-            return Response({'error': 'Genre ID parameter is required'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            genre_id = int(genre_id)
-            page = int(request.query_params.get('page', 1))
-            tv_shows = self.tmdb_tv_service.get_tv_shows_by_genre(genre_id, page)
-            return Response(tv_shows)
-        except ValueError:
-            return Response({'error': 'Invalid genre ID'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=False, methods=['get'])
-    def airing_today(self, request):
-        page = int(request.query_params.get('page', 1))
-        tv_shows = self.tmdb_tv_service.get_airing_today_tv_shows(page)
-        return Response(tv_shows)
-    
-    @action(detail=False, methods=['get'])
-    def on_the_air(self, request):
-        page = int(request.query_params.get('page', 1))
-        tv_shows = self.tmdb_tv_service.get_on_the_air_tv_shows(page)
-        return Response(tv_shows)
-    
-    @action(detail=False, methods=['get'])
-    def search(self, request):
-        query = request.query_params.get('q', '').strip()
-        if not query:
-            return Response({'error': 'Search query is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        page = int(request.query_params.get('page', 1))
-        tv_shows = self.tmdb_tv_service.search_tv_shows(query, page)
-        return Response(tv_shows)
-    
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def request_tv_show(self, request, pk=None):
-        try:
-            tv_show_id = int(pk)
-            tv_show = self.tmdb_tv_service.get_tv_show_details(tv_show_id)
-            if not tv_show:
-                return Response({'error': 'TV show not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-            tv_show_service = TVShowService()
-            success = tv_show_service.request_tv_show_on_sonarr(tv_show)
-            
-            if success:
-                return Response({'message': 'TV show requested successfully'})
-            else:
-                return Response({'error': 'Failed to request TV show'}, 
-                              status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-        except ValueError:
-            return Response({'error': 'Invalid TV show ID'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=False, methods=['get'])
-    def ai_recommendations(self, request):
-        """Get AI-powered TV show recommendations"""
-        gemini_service = GeminiService()
-        
-        # Get user preferences from query parameters
-        preferences = {
-            'genres': request.query_params.get('genres', 'drama,comedy,thriller').split(','),
-            'mood': request.query_params.get('mood', 'entertaining'),
-            'year_range': request.query_params.get('year_range', '2015-2024')
-        }
-        
-        tv_shows = gemini_service.get_personalized_tv_recommendations(preferences)
-        return Response(tv_shows)
-    
-    @action(detail=False, methods=['get'])
-    def mood_recommendations(self, request):
-        """Get mood-based TV show recommendations"""
-        mood = request.query_params.get('mood', 'happy')
-        gemini_service = GeminiService()
-        
-        tv_shows = gemini_service.get_tv_mood_based_recommendations(mood)
-        return Response(tv_shows)
-    
-    @action(detail=False, methods=['get'])
-    def similar_tv_shows(self, request):
-        """Get TV shows similar to a given TV show"""
-        tv_show_title = request.query_params.get('title')
-        if not tv_show_title:
-            return Response({'error': 'TV show title is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        gemini_service = GeminiService()
-        tv_shows = gemini_service.get_similar_tv_shows(tv_show_title)
-        return Response(tv_shows)
 
 
-class TVShowRatingViewSet(viewsets.ModelViewSet):
-    serializer_class = TVShowRatingSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return TVShowRating.objects.filter(user=self.request.user)
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
 
 
-class TVShowWatchlistViewSet(viewsets.ModelViewSet):
-    serializer_class = TVShowWatchlistSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return TVShowWatchlist.objects.filter(user=self.request.user)
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class TVShowRecommendationViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = TVShowRecommendationSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return TVShowRecommendation.objects.filter(user=self.request.user)
-
-
-class UserSettingsViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-    
-    def list(self, request):
-        """Get user settings"""
-        settings, created = UserSettings.objects.get_or_create(user=request.user)
-        serializer = UserSettingsSerializer(settings)
-        return Response(serializer.data)
-    
-    def create(self, request):
-        """Create or update user settings"""
-        settings, created = UserSettings.objects.get_or_create(user=request.user)
-        serializer = UserSettingsSerializer(settings, data=request.data, partial=True)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def update(self, request, pk=None):
-        """Update user settings"""
-        settings = get_object_or_404(UserSettings, user=request.user)
-        serializer = UserSettingsSerializer(settings, data=request.data, partial=True)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Standalone auth views (CSRF exempt)
-@csrf_exempt
+# Standalone auth views
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def auth_login(request):
@@ -482,7 +501,6 @@ def auth_login(request):
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
     return Response({'error': 'Username and password required'}, status=status.HTTP_400_BAD_REQUEST)
 
-@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def auth_register(request):
@@ -513,7 +531,6 @@ def auth_register(request):
         }
     })
 
-@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def auth_logout(request):
@@ -534,3 +551,22 @@ def auth_current_user(request):
             }
         })
     return Response({'user': None})
+
+
+# Template rendering views
+def movie_list(request):
+    """Movies listing page"""
+    return render(request, 'movies/list.html')
+
+def movie_detail(request, movie_id):
+    """Movie detail page"""
+    context = {'movie_id': movie_id}
+    return render(request, 'movies/detail.html', context)
+
+def popular_movies(request):
+    """Popular movies page"""
+    return render(request, 'movies/popular.html')
+
+def top_rated_movies(request):
+    """Top rated movies page"""
+    return render(request, 'movies/top_rated.html')

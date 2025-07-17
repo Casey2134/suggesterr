@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Discovery Quiz - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'recommendations/css/quiz.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content" style="padding-top: 6rem;">
+    <div class="section">
+        <div class="section-header">
+            <div>
+                <h1 class="section-title">🎬 Discovery Quiz</h1>
+                <p class="section-subtitle">
+                    Help us understand your movie preferences to provide personalized recommendations
+                </p>
+            </div>
+        </div>
+
+        <!-- Quiz Progress -->
+        <div class="quiz-progress-container">
+            <div class="quiz-progress-info">
+                <span class="progress-label">Progress</span>
+                <span class="progress-text" id="progress-text">0 / 0</span>
+            </div>
+            <div class="quiz-progress-bar">
+                <div class="quiz-progress-fill" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="quiz-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading quiz questions...</p>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container" class="d-none">
+            <div class="quiz-card">
+                <form id="quiz-form">
+                    <div id="questions-container">
+                        <!-- Questions will be dynamically inserted here -->
+                    </div>
+                    
+                    <div class="quiz-navigation">
+                        <button type="button" id="prev-btn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        
+                        <div class="quiz-nav-actions">
+                            <button type="button" id="next-btn" class="btn btn-primary">
+                                Next <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button type="submit" id="submit-btn" class="btn btn-primary d-none">
+                                <i class="fas fa-check"></i> Submit Quiz
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container" class="d-none">
+            <div class="quiz-success-card">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2 class="success-title">Quiz Completed!</h2>
+                <p class="success-message">
+                    Your personality profile has been updated. Our AI will now provide more personalized recommendations.
+                </p>
+                <a href="{% url 'recommendations:ai' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-magic"></i> Get Recommendations
+                </a>
+            </div>
+        </div>
+
+        <!-- Error Container -->
+        <div id="error-container" class="d-none">
+            <div class="quiz-error-card">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 class="error-title">Error</h2>
+                <p class="error-message" id="error-message">
+                    Something went wrong. Please try again later.
+                </p>
+                <button onclick="window.location.reload()" class="btn btn-danger">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'recommendations/js/quiz.js' %}"></script>
+{% endblock %}

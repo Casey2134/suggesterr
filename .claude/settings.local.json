@@ -9,7 +9,10 @@
       "Bash(pip install:*)",
       "Bash(brew install:*)",
       "Bash(curl:*)",
-      "Bash(python manage.py:*)"
+      "Bash(python manage.py:*)",
+      "Bash(open test_auth_ui.html)",
+      "Bash(python test_auth_api.py:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

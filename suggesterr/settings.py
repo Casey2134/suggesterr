@@ -43,7 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    # Custom apps
+    'core',
     'movies',
+    'tv_shows',
+    'accounts',
+    'recommendations',
     'integrations',
 ]
 

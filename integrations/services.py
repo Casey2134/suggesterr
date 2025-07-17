@@ -74,7 +74,7 @@ class JellyfinService:
             params = {
                 'IncludeItemTypes': 'Movie',
                 'Recursive': 'true',
-                'Fields': 'Genres,ProductionYear,Overview,CommunityRating,OfficialRating',
+                'Fields': 'Genres,ProductionYear,Overview,CommunityRating,OfficialRating,DateCreated,ProviderIds,Images',
                 'SortBy': 'DateAdded,SortName',
                 'SortOrder': 'Descending'
             }
@@ -105,13 +105,33 @@ class JellyfinService:
                 else:
                     genre_list = []
                 
+                # Get TMDB ID from provider IDs
+                provider_ids = item.get('ProviderIds', {})
+                tmdb_id = provider_ids.get('Tmdb')
+                if tmdb_id:
+                    try:
+                        tmdb_id = int(tmdb_id)
+                    except:
+                        tmdb_id = None
+
+                # Get poster path from Jellyfin
+                poster_path = None
+                if 'Images' in item and 'Primary' in item['Images']:
+                    poster_path = f"{self.base_url}/Items/{item['Id']}/Images/Primary"
+
                 movie_info = {
                     'title': item.get('Name', ''),
                     'year': item.get('ProductionYear'),
                     'genres': genre_list,
                     'overview': item.get('Overview', ''),
                     'rating': item.get('CommunityRating'),
-                    'content_rating': item.get('OfficialRating')
+                    'content_rating': item.get('OfficialRating'),
+                    'tmdb_id': tmdb_id,
+                    'date_added': item.get('DateCreated'),
+                    'server_type': 'jellyfin',
+                    'poster_path': poster_path,
+                    'vote_average': item.get('CommunityRating', 0),
+                    'release_date': str(item.get('ProductionYear', '')) if item.get('ProductionYear') else None
                 }
                 library_movies.append(movie_info)
             
@@ -262,7 +282,7 @@ class RadarrService:
             'Accept': 'application/json'
         }
     
-    def request_movie(self, movie_data):
+    def request_movie(self, movie_data, quality_profile_id=None):
         if not self.base_url or not self.api_key:
             logger.error(f"Radarr not configured - URL: {self.base_url}, API Key: {'Present' if self.api_key else 'Missing'}")
             return False
@@ -309,13 +329,16 @@ class RadarrService:
             # Get the first result
             radarr_movie_data = search_results[0]
             
+            # Use provided quality profile or default to 1
+            quality_id = quality_profile_id if quality_profile_id else 1
+            
             # Add movie to Radarr
             add_url = f"{self.base_url}/api/v3/movie"
             add_data = {
                 'title': radarr_movie_data.get('title'),
                 'year': radarr_movie_data.get('year'),
                 'tmdbId': radarr_movie_data.get('tmdbId'),
-                'qualityProfileId': 1,  # Default quality profile
+                'qualityProfileId': quality_id,
                 'rootFolderPath': self._get_root_folder(),
                 'monitored': True,
                 'searchForMovie': True
@@ -327,8 +350,21 @@ class RadarrService:
             response = requests.post(add_url, json=add_data, headers=self.headers, timeout=10)
             
             logger.info(f"Add response status: {response.status_code}")
-            if response.status_code >= 400:
+            
+            # Handle "already exists" error gracefully
+            if response.status_code == 400:
+                error_data = response.json()
+                if isinstance(error_data, list) and len(error_data) > 0:
+                    error = error_data[0]
+                    if error.get('errorCode') == 'MovieExistsValidator':
+                        logger.info(f"Movie {title} already exists in Radarr")
+                        return True  # Return True since the movie is already there
+                
                 logger.error(f"Add response error: {response.text}")
+                return False
+            elif response.status_code >= 400:
+                logger.error(f"Add response error: {response.text}")
+                return False
                 
             response.raise_for_status()
             
@@ -385,6 +421,66 @@ class RadarrService:
         except Exception as e:
             logger.error(f"Error getting Radarr queue status: {e}")
             return {'total': 0, 'items': []}
+    
+    def is_movie_in_radarr(self, tmdb_id):
+        """Check if a movie already exists in Radarr"""
+        if not self.base_url or not self.api_key or not tmdb_id:
+            return False
+        
+        try:
+            url = f"{self.base_url}/api/v3/movie"
+            response = requests.get(url, headers=self.headers, timeout=15)
+            response.raise_for_status()
+            
+            movies = response.json()
+            for movie in movies:
+                if movie.get('tmdbId') == int(tmdb_id):
+                    logger.info(f"Movie with TMDB ID {tmdb_id} found in Radarr")
+                    return True
+            
+            return False
+        except Exception as e:
+            logger.error(f"Error checking if movie exists in Radarr: {e}")
+            return False
+    
+    def get_radarr_movies_by_tmdb_ids(self, tmdb_ids):
+        """Get existing movies from Radarr by TMDB IDs"""
+        if not self.base_url or not self.api_key or not tmdb_ids:
+            return {}
+        
+        try:
+            url = f"{self.base_url}/api/v3/movie"
+            response = requests.get(url, headers=self.headers, timeout=15)
+            response.raise_for_status()
+            
+            movies = response.json()
+            existing_movies = {}
+            for movie in movies:
+                tmdb_id = movie.get('tmdbId')
+                if tmdb_id and tmdb_id in tmdb_ids:
+                    existing_movies[tmdb_id] = movie
+            
+            logger.info(f"Found {len(existing_movies)} existing movies in Radarr out of {len(tmdb_ids)} requested")
+            return existing_movies
+        except Exception as e:
+            logger.error(f"Error getting Radarr movies: {e}")
+            return {}
+    
+    def get_quality_profiles(self):
+        """Get available quality profiles from Radarr"""
+        if not self.base_url or not self.api_key:
+            return []
+        
+        try:
+            url = f"{self.base_url}/api/v3/qualityprofile"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            
+            profiles = response.json()
+            return [{'id': p['id'], 'name': p['name']} for p in profiles]
+        except Exception as e:
+            logger.error(f"Error getting Radarr quality profiles: {e}")
+            return []
 
 
 class SonarrService:
@@ -396,7 +492,7 @@ class SonarrService:
             'Content-Type': 'application/json'
         }
     
-    def request_series(self, series_title, tmdb_id=None, tvdb_id=None):
+    def request_series(self, series_title, tmdb_id=None, tvdb_id=None, quality_profile_id=None, selected_seasons=None):
         if not self.base_url or not self.api_key:
             return False
         
@@ -429,20 +525,47 @@ class SonarrService:
             # Get the first result
             series_data = search_results[0]
             
+            # Process seasons - mark selected ones as monitored
+            seasons = series_data.get('seasons', [])
+            if selected_seasons and seasons:
+                for season in seasons:
+                    season_num = season.get('seasonNumber')
+                    # Monitor season if it's in selected_seasons list, otherwise don't monitor
+                    season['monitored'] = season_num in selected_seasons
+            
+            # Use provided quality profile or default to 1
+            quality_id = quality_profile_id if quality_profile_id else 1
+            
             # Add series to Sonarr
             add_url = f"{self.base_url}/api/v3/series"
             add_data = {
                 'title': series_data.get('title'),
                 'year': series_data.get('year'),
                 'tvdbId': series_data.get('tvdbId'),
-                'qualityProfileId': 1,  # Default quality profile
+                'qualityProfileId': quality_id,
                 'rootFolderPath': self._get_root_folder(),
                 'monitored': True,
                 'searchForMissingEpisodes': True,
-                'seasons': series_data.get('seasons', [])
+                'seasons': seasons
             }
             
             response = requests.post(add_url, json=add_data, headers=self.headers, timeout=10)
+            
+            # Handle "already exists" error gracefully
+            if response.status_code == 400:
+                error_data = response.json()
+                if isinstance(error_data, list) and len(error_data) > 0:
+                    error = error_data[0]
+                    if 'SeriesExistsValidator' in error.get('errorCode', ''):
+                        logger.info(f"Series {series_title} already exists in Sonarr")
+                        return True  # Return True since the series is already there
+                
+                logger.error(f"Add response error: {response.text}")
+                return False
+            elif response.status_code >= 400:
+                logger.error(f"Add response error: {response.text}")
+                return False
+                
             response.raise_for_status()
             
             logger.info(f"Series {series_title} requested successfully on Sonarr")
@@ -480,3 +603,19 @@ class SonarrService:
         except Exception as e:
             logger.error(f"Error getting Sonarr queue status: {e}")
             return {'total': 0, 'items': []}
+    
+    def get_quality_profiles(self):
+        """Get available quality profiles from Sonarr"""
+        if not self.base_url or not self.api_key:
+            return []
+        
+        try:
+            url = f"{self.base_url}/api/v3/qualityprofile"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            
+            profiles = response.json()
+            return [{'id': p['id'], 'name': p['name']} for p in profiles]
+        except Exception as e:
+            logger.error(f"Error getting Sonarr quality profiles: {e}")
+            return []

@@ -3,7 +3,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q, Avg
 from tmdbv3api import TMDb, Movie as TMDbMovie, Genre as TMDbGenre
-from .models import Movie, Genre, UserRating, MovieRecommendation
+from .models import Movie, UserRating, MovieRecommendation
+from core.models import Genre
 from integrations.services import JellyfinService, PlexService, RadarrService, SonarrService
 from .gemini_service import GeminiService
 
@@ -82,9 +83,6 @@ class MovieService:
                 genres = Genre.objects.filter(tmdb_id__in=tmdb_movie_data['genre_ids'])
                 movie.genres.set(genres)
             
-            # Check availability on Jellyfin and Plex
-            movie.available_on_jellyfin = self.jellyfin_service.is_movie_available(movie)
-            movie.available_on_plex = self.plex_service.is_movie_available(movie)
             movie.save()
             
             return movie
@@ -92,15 +90,95 @@ class MovieService:
             print(f"Error creating/updating movie: {e}")
             return None
     
-    def request_movie_on_radarr(self, movie):
-        return self.radarr_service.request_movie(movie)
+    def request_movie_on_radarr(self, movie, quality_profile_id=None):
+        # Get TMDB ID for checking
+        tmdb_id = movie.get('id') if isinstance(movie, dict) else getattr(movie, 'tmdb_id', None)
+        title = movie.get('title') if isinstance(movie, dict) else getattr(movie, 'title', 'Unknown')
+        
+        if not tmdb_id:
+            print(f"No TMDB ID found for movie {title}")
+            return False
+        
+        # Check if movie already exists in Radarr
+        if self.radarr_service.is_movie_in_radarr(tmdb_id):
+            print(f"Movie {title} already exists in Radarr, updating local status")
+            # Update local database to reflect this
+            try:
+                # Handle release_date properly
+                if isinstance(movie, dict):
+                    release_date = movie.get('release_date')
+                else:
+                    release_date = getattr(movie, 'release_date', None)
+                
+                # Convert year-only dates to proper format
+                if release_date and len(str(release_date)) == 4:
+                    try:
+                        release_date = f"{release_date}-01-01"
+                    except:
+                        release_date = None
+                elif release_date and not isinstance(release_date, str):
+                    release_date = None
+                
+                movie_obj, created = Movie.objects.get_or_create(
+                    tmdb_id=tmdb_id,
+                    defaults={
+                        'title': movie.get('title') if isinstance(movie, dict) else getattr(movie, 'title', ''),
+                        'overview': movie.get('overview', '') if isinstance(movie, dict) else getattr(movie, 'overview', ''),
+                        'release_date': release_date,
+                        'poster_path': movie.get('poster_path', '') if isinstance(movie, dict) else getattr(movie, 'poster_path', ''),
+                        'vote_average': movie.get('vote_average', 0) if isinstance(movie, dict) else getattr(movie, 'vote_average', 0),
+                        'vote_count': movie.get('vote_count', 0) if isinstance(movie, dict) else getattr(movie, 'vote_count', 0)
+                    }
+                )
+                movie_obj.requested_on_radarr = True
+                movie_obj.save()
+            except Exception as e:
+                print(f"Error updating movie status: {e}")
+            return True  # Return True since movie is already in Radarr
+        
+        # Movie doesn't exist in Radarr, proceed with request
+        success = self.radarr_service.request_movie(movie, quality_profile_id)
+        if success:
+            # Update or create the movie record to track request status
+            try:
+                # Handle release_date properly
+                if isinstance(movie, dict):
+                    release_date = movie.get('release_date')
+                else:
+                    release_date = getattr(movie, 'release_date', None)
+                
+                # Convert year-only dates to proper format
+                if release_date and len(str(release_date)) == 4:
+                    try:
+                        release_date = f"{release_date}-01-01"
+                    except:
+                        release_date = None
+                elif release_date and not isinstance(release_date, str):
+                    release_date = None
+                
+                movie_obj, created = Movie.objects.get_or_create(
+                    tmdb_id=tmdb_id,
+                    defaults={
+                        'title': movie.get('title') if isinstance(movie, dict) else getattr(movie, 'title', ''),
+                        'overview': movie.get('overview', '') if isinstance(movie, dict) else getattr(movie, 'overview', ''),
+                        'release_date': release_date,
+                        'poster_path': movie.get('poster_path', '') if isinstance(movie, dict) else getattr(movie, 'poster_path', ''),
+                        'vote_average': movie.get('vote_average', 0) if isinstance(movie, dict) else getattr(movie, 'vote_average', 0),
+                        'vote_count': movie.get('vote_count', 0) if isinstance(movie, dict) else getattr(movie, 'vote_count', 0)
+                    }
+                )
+                movie_obj.requested_on_radarr = True
+                movie_obj.save()
+            except Exception as e:
+                print(f"Error updating movie request status: {e}")
+        return success
 
 
 class TVShowService:
     def __init__(self):
         self.sonarr_service = SonarrService()
     
-    def request_tv_show_on_sonarr(self, tv_show_data):
+    def request_tv_show_on_sonarr(self, tv_show_data, quality_profile_id=None, selected_seasons=None):
         """Request a TV show on Sonarr using TMDB data"""
         if not tv_show_data:
             return False
@@ -110,7 +188,12 @@ class TVShowService:
             return False
         
         tmdb_id = tv_show_data.get('id')
-        return self.sonarr_service.request_series(title, tmdb_id=tmdb_id)
+        return self.sonarr_service.request_series(
+            title, 
+            tmdb_id=tmdb_id, 
+            quality_profile_id=quality_profile_id,
+            selected_seasons=selected_seasons
+        )
 
 
 class RecommendationService:
