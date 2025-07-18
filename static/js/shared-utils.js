@@ -151,7 +151,7 @@ class SuggesterrUtils {
         if (detailsBtn) {
             detailsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.showTVShowDetails(tvShow);
+                this.showTVShowDetails(tvShow.id || tvShow.tmdb_id);
             });
         }
         
@@ -356,7 +356,7 @@ class SuggesterrUtils {
                 </div>
             `;
             
-            modal.style.display = 'block';
+            modal.classList.add('active');
         }
     }
 
@@ -388,7 +388,7 @@ class SuggesterrUtils {
                 </div>
             `;
             
-            modal.style.display = 'block';
+            modal.classList.add('active');
         }
     }
 }

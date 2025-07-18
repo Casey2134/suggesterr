@@ -7,8 +7,10 @@ class TMDBService:
     """Service for interacting with The Movie Database API"""
     
     def __init__(self):
-        # Use environment API key if available, otherwise use the provided API key
-        self.api_key = settings.TMDB_API_KEY or "26abd1c9264622709687e6f61139791c"
+        # Require TMDB API key from environment
+        self.api_key = settings.TMDB_API_KEY
+        if not self.api_key:
+            raise ValueError("TMDB_API_KEY environment variable is required")
         self.base_url = "https://api.themoviedb.org/3"
         self.image_base_url = "https://image.tmdb.org/t/p/w500"
     

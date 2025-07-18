@@ -1,74 +1,36 @@
-version: '3.8'
-
 services:
-  db:
-    image: postgres:15
+  suggesterr:
+    build:
+      context: .
+      dockerfile: Dockerfile.allinone
+    container_name: suggesterr
     environment:
-      POSTGRES_DB: suggesterr
-      POSTGRES_USER: suggesterr
-      POSTGRES_PASSWORD: suggesterr
+      # Required API Keys - Get these from:
+      # TMDB: https://www.themoviedb.org/settings/api
+      # Gemini: https://ai.google.dev/
+      - TMDB_API_KEY=your-tmdb-api-key
+      - GOOGLE_GEMINI_API_KEY=your-gemini-api-key
+      
+      # Optional - Admin user (created automatically on first run)
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_PASSWORD=admin123
+      - DJANGO_SUPERUSER_EMAIL=admin@suggesterr.local
+      
+      # Optional - Media server integration
+      - JELLYFIN_URL=http://your-jellyfin-server:8096
+      - JELLYFIN_API_KEY=your-jellyfin-api-key
+      - PLEX_URL=http://your-plex-server:32400
+      - PLEX_TOKEN=your-plex-token
+      
+      # Optional - Download management
+      - RADARR_URL=http://your-radarr-server:7878
+      - RADARR_API_KEY=your-radarr-api-key
+      - SONARR_URL=http://your-sonarr-server:8989
+      - SONARR_API_KEY=your-sonarr-api-key
+      
+      - TZ=Etc/UTC
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - /path/to/suggesterr/config:/config
     ports:
-      - "5432:5432"
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - redis
-    environment:
-      - DEBUG=1
-      - DATABASE_URL=postgresql://suggesterr:suggesterr@db:5432/suggesterr
-      - REDIS_URL=redis://redis:6379/0
-      # Load environment variables from .env file
-      - TMDB_API_KEY=${TMDB_API_KEY}
-      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
-      - JELLYFIN_URL=${JELLYFIN_URL}
-      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
-      - PLEX_URL=${PLEX_URL}
-      - PLEX_TOKEN=${PLEX_TOKEN}
-      - RADARR_URL=${RADARR_URL}
-      - RADARR_API_KEY=${RADARR_API_KEY}
-      - SONARR_URL=${SONARR_URL}
-      - SONARR_API_KEY=${SONARR_API_KEY}
-    env_file:
-      - .env
-
-  celery:
-    build: .
-    command: celery -A suggesterr worker --loglevel=info
-    volumes:
-      - .:/app
-    depends_on:
-      - db
-      - redis
-    environment:
-      - DEBUG=1
-      - DATABASE_URL=postgresql://suggesterr:suggesterr@db:5432/suggesterr
-      - REDIS_URL=redis://redis:6379/0
-      - TMDB_API_KEY=${TMDB_API_KEY}
-      - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY}
-      - JELLYFIN_URL=${JELLYFIN_URL}
-      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
-      - PLEX_URL=${PLEX_URL}
-      - PLEX_TOKEN=${PLEX_TOKEN}
-      - RADARR_URL=${RADARR_URL}
-      - RADARR_API_KEY=${RADARR_API_KEY}
-      - SONARR_URL=${SONARR_URL}
-      - SONARR_API_KEY=${SONARR_API_KEY}
-    env_file:
-      - .env
-
-volumes:
-  postgres_data:
+      - 8000:8000
+    restart: unless-stopped

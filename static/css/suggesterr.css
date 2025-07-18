@@ -1,6 +1,6 @@
-/* Suggesterr SPA Styles */
+/* Suggesterr - Tailwind CSS Integration */
 
-/* CSS Variables & Themes */
+/* Custom CSS Variables for Theme Support */
 :root {
     --bg-primary: #141414;
     --bg-secondary: #1a1a1a;
@@ -64,6 +64,19 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
 }
+
+/* Theme Utility Classes */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-card { background-color: var(--bg-card); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.accent-color { color: var(--accent-color); }
+.bg-accent { background-color: var(--accent-color); }
+.bg-accent-hover { background-color: var(--accent-hover); }
+.border-theme { border-color: var(--border-color); }
+.gradient-overlay { background: var(--gradient-overlay); }
 
 /* Header & Navigation */
 .header {
@@ -198,14 +211,6 @@ body {
     background: var(--bg-primary);
 }
 
-.search-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: flex;
-    justify-content: center;
-}
-
 .search-box {
     position: relative;
     width: 100%;
@@ -236,6 +241,150 @@ body {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.1);
+}
+
+/* Search Suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-top: 4px;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background: var(--bg-secondary);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-poster {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+}
+
+.suggestion-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggestion-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Movie Grid for Search Results */
+.movie-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    overflow: visible !important;
+}
+
+.movie-grid .movie-card {
+    min-width: auto !important;
+    max-width: none !important;
+    flex-shrink: 1 !important;
+}
+
+.movie-grid .movie-poster {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain;
+    background: var(--bg-secondary);
+}
+
+.movie-grid .movie-info {
+    padding: 0.5rem 0 !important;
+}
+
+.movie-grid .movie-title {
+    font-size: 0.85rem !important;
+    line-height: 1.2 !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.25rem !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.movie-grid .movie-meta {
+    font-size: 0.75rem !important;
+    margin-top: 0.25rem !important;
+}
+
+/* Movie metadata styling */
+.movie-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.movie-year {
+    color: var(--text-secondary);
+}
+
+.movie-rating {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.movie-rating i {
+    color: #fbbf24;
+    margin-right: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .movie-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .movie-grid .movie-poster {
+        height: auto !important;
+        object-fit: contain;
+    }
+    
+    .movie-grid .movie-title {
+        font-size: 0.8rem !important;
+    }
 }
 
 /* Hero Section */
@@ -309,6 +458,12 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
+}
+
+/* For pages without hero section, add top padding to account for fixed header */
+.content > .section:first-child,
+.main-content > .section:first-child {
+    padding-top: 6rem;
 }
 
 .section {
@@ -946,6 +1101,306 @@ body {
     background: #c82333;
 }
 
+/* Chat Assistant Styles */
+.chat-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+}
+
+.chat-toggle-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.chat-toggle-btn:hover {
+    background: var(--accent-hover);
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Chat Modal Styles */
+.chat-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-container {
+    background: var(--bg-card);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    height: 80vh;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.chat-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+    border-radius: 12px 12px 0 0;
+}
+
+.chat-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.chat-action-btn,
+.chat-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.chat-action-btn:hover,
+.chat-close-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.chat-message.user {
+    align-self: flex-end;
+}
+
+.chat-message.assistant {
+    align-self: flex-start;
+}
+
+.message-content {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    line-height: 1.4;
+}
+
+.chat-message.user .message-content {
+    background: var(--accent-color);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message.assistant .message-content {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.chat-input-container {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 0 0 12px 12px;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+#chatInput {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+#chatInput:focus {
+    border-color: var(--accent-color);
+}
+
+.chat-send-btn {
+    padding: 0.75rem;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1rem;
+}
+
+.chat-send-btn:hover {
+    background: var(--accent-hover);
+}
+
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+.recommendations-container {
+    margin-top: 1rem;
+}
+
+.movie-recommendations,
+.tv-show-recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chat-modal .movie-card,
+.chat-modal .tv-show-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.chat-modal .movie-poster,
+.chat-modal .tv-show-poster {
+    width: 60px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.chat-modal .movie-info,
+.chat-modal .tv-show-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.chat-modal .movie-title,
+.chat-modal .tv-show-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.chat-modal .movie-year,
+.chat-modal .tv-show-year,
+.chat-modal .movie-rating,
+.chat-modal .tv-show-rating,
+.chat-modal .tv-show-seasons {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.chat-modal .movie-overview,
+.chat-modal .tv-show-overview {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0;
+}
+
+.chat-modal .movie-actions,
+.chat-modal .tv-show-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .chat-container {
+        width: 95%;
+        height: 85vh;
+    }
+    
+    .chat-message {
+        max-width: 90%;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .nav-links {
@@ -1065,870 +1520,5 @@ body {
 
     .search-box {
         max-width: 100%;
-    }
-}
-
-/* Request Modal Styling */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-}
-
-.modal-content {
-    background-color: var(--surface);
-    margin: 5% auto;
-    padding: 0;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-30px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-header h2 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.5rem;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 2rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-    background-color: var(--danger);
-    color: white;
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
-
-.movie-info-header, .tv-info-header {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.request-poster {
-    width: 120px;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 8px;
-    flex-shrink: 0;
-}
-
-.movie-details, .tv-details {
-    flex: 1;
-}
-
-.movie-details h3, .tv-details h3 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary);
-    font-size: 1.3rem;
-}
-
-.movie-details p, .tv-details p {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-secondary);
-}
-
-.request-options {
-    margin-bottom: 2rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.form-select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background-color: var(--background);
-    color: var(--text-primary);
-    font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-.form-select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-.season-selection {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.season-item {
-    padding: 1rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background-color: var(--background);
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.season-item:hover {
-    border-color: var(--primary);
-    background-color: var(--surface);
-}
-
-.season-item.selected {
-    border-color: var(--primary);
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-.season-item h4 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary);
-    font-size: 1rem;
-}
-
-.season-item p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.season-checkbox {
-    margin-right: 0.5rem;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-}
-
-.modal-actions .btn {
-    min-width: 120px;
-}
-
-/* Checkbox styling */
-input[type="checkbox"] {
-    margin-right: 0.5rem;
-    accent-color: var(--primary);
-}
-
-/* Request modal responsive design */
-@media (max-width: 768px) {
-    .modal-content {
-        width: 95%;
-        margin: 2% auto;
-        max-height: 95vh;
-    }
-    
-    .movie-info-header, .tv-info-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-    
-    .request-poster {
-        width: 100px;
-        height: 150px;
-    }
-    
-    .season-selection {
-        grid-template-columns: 1fr;
-    }
-    
-    .modal-actions {
-        flex-direction: column;
-    }
-    
-    .modal-actions .btn {
-        width: 100%;
-    }
-}
-
-/* Connection Test Results Styles */
-.connection-test-results {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.test-result {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-
-.test-result strong {
-    min-width: 120px;
-    margin-right: 1rem;
-}
-
-.test-result .status-icon {
-    margin-right: 0.5rem;
-}
-
-.test-result.success {
-    border-color: #198754;
-    background-color: rgba(25, 135, 84, 0.1);
-}
-
-.test-result.error {
-    border-color: #dc3545;
-    background-color: rgba(220, 53, 69, 0.1);
-}
-
-.test-result.not_configured {
-    border-color: #ffc107;
-    background-color: rgba(255, 193, 7, 0.1);
-}
-
-.text-success {
-    color: #198754;
-}
-
-.text-danger {
-    color: #dc3545;
-}
-
-.text-warning {
-    color: #ffc107;
-}
-
-.text-muted {
-    color: var(--text-muted);
-}
-
-/* AI Chat Assistant Styles */
-.chat-fab {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-}
-
-.chat-toggle-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--accent-color);
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-.chat-toggle-btn:hover {
-    background: var(--accent-hover);
-    transform: scale(1.1);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
-}
-
-.chat-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    backdrop-filter: blur(5px);
-}
-
-.chat-container {
-    background: var(--bg-card);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    height: 70vh;
-    max-height: 600px;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: chatSlideIn 0.3s ease-out;
-}
-
-@keyframes chatSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-30px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.chat-header {
-    background: var(--bg-secondary);
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    border-radius: 12px 12px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chat-header h3 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.chat-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.chat-action-btn,
-.chat-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-
-.chat-action-btn:hover,
-.chat-close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-}
-
-.chat-close-btn:hover {
-    background: var(--accent-color);
-    color: white;
-}
-
-.chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.chat-messages::-webkit-scrollbar {
-    width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-}
-
-.chat-message {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-}
-
-.chat-message.assistant {
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.chat-message.user {
-    justify-content: flex-end;
-}
-
-.chat-message.user .message-content {
-    background: var(--accent-color);
-    color: white;
-    border-radius: 18px 18px 4px 18px;
-    max-width: 70%;
-}
-
-.chat-message.assistant .message-content {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border-radius: 18px 18px 18px 4px;
-    border: 1px solid var(--border-color);
-    max-width: 80%;
-}
-
-.chat-message.assistant .recommendations-container {
-    width: 100%;
-    max-width: 100%;
-}
-
-.message-content {
-    padding: 0.75rem 1rem;
-    word-wrap: break-word;
-    line-height: 1.4;
-}
-
-.message-content p {
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-/* Recommendations container in chat */
-.chat-messages .recommendations-container {
-    margin-top: 1rem;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-/* Movie recommendations in chat */
-.chat-messages .movie-recommendations {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-width: 100%;
-    overflow: hidden;
-    width: 100%;
-    margin-bottom: 1rem;
-}
-
-.chat-messages .movie-recommendations .movie-card {
-    display: flex;
-    flex-direction: row;
-    gap: 0.75rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.75rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    max-width: 100%;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-}
-
-.chat-messages .movie-recommendations .movie-card:hover {
-    background: var(--bg-secondary);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-poster {
-    width: 45px;
-    height: 68px;
-    border-radius: 3px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 0;
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-year {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-rating {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-overview {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin: 0;
-    line-height: 1.3;
-    flex: 1;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.chat-messages .movie-recommendations .movie-card .movie-actions {
-    display: flex;
-    gap: 0.4rem;
-    margin-top: 0.4rem;
-    flex-wrap: wrap;
-}
-
-.chat-messages .movie-recommendations .movie-card .btn-sm {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.75rem;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    flex-shrink: 0;
-}
-
-.chat-messages .movie-recommendations .movie-card .btn-primary {
-    background: var(--accent-color);
-    color: white;
-}
-
-.chat-messages .movie-recommendations .movie-card .btn-primary:hover {
-    background: var(--accent-hover);
-}
-
-.chat-messages .movie-recommendations .movie-card .btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-}
-
-.chat-messages .movie-recommendations .movie-card .btn-secondary:hover {
-    background: var(--bg-primary);
-}
-
-/* TV show recommendations in chat */
-.chat-messages .tv-show-recommendations {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-width: 100%;
-    overflow: hidden;
-    width: 100%;
-    margin-bottom: 1rem;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card {
-    display: flex;
-    flex-direction: row;
-    gap: 0.75rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.75rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    max-width: 100%;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card:hover {
-    background: var(--bg-secondary);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-poster {
-    width: 45px;
-    height: 68px;
-    border-radius: 3px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 0;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-year {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-rating {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-seasons {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-overview {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin: 0;
-    line-height: 1.3;
-    flex: 1;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .tv-show-actions {
-    display: flex;
-    gap: 0.4rem;
-    margin-top: 0.4rem;
-    flex-wrap: wrap;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .btn-sm {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.75rem;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    flex-shrink: 0;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .btn-primary {
-    background: var(--accent-color);
-    color: white;
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .btn-primary:hover {
-    background: var(--accent-hover);
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-}
-
-.chat-messages .tv-show-recommendations .tv-show-card .btn-secondary:hover {
-    background: var(--bg-primary);
-}
-
-.chat-input-container {
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    border-radius: 0 0 12px 12px;
-}
-
-.chat-input-wrapper {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.chat-input-wrapper input {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 25px;
-    background: var(--bg-card);
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s ease;
-}
-
-.chat-input-wrapper input:focus {
-    border-color: var(--accent-color);
-}
-
-.chat-send-btn {
-    background: var(--accent-color);
-    border: none;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-
-.chat-send-btn:hover {
-    background: var(--accent-hover);
-    transform: scale(1.05);
-}
-
-.chat-send-btn:disabled {
-    background: var(--text-muted);
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Typing indicator */
-.typing-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.5rem 0;
-}
-
-.typing-indicator span {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    animation: typingAnimation 1.4s infinite ease-in-out;
-}
-
-.typing-indicator span:nth-child(1) {
-    animation-delay: -0.32s;
-}
-
-.typing-indicator span:nth-child(2) {
-    animation-delay: -0.16s;
-}
-
-@keyframes typingAnimation {
-    0%, 80%, 100% {
-        transform: scale(0);
-        opacity: 0.5;
-    }
-    40% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-/* Mobile responsiveness for chat */
-@media (max-width: 768px) {
-    .chat-container {
-        width: 95%;
-        height: 80vh;
-        max-height: none;
-    }
-    
-    .chat-fab {
-        bottom: 20px;
-        right: 20px;
-    }
-    
-    .chat-toggle-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 1.2rem;
-    }
-    
-    .chat-header {
-        padding: 0.75rem 1rem;
-    }
-    
-    .chat-header h3 {
-        font-size: 1rem;
-    }
-    
-    .chat-messages {
-        padding: 0.75rem;
-    }
-    
-    .chat-message.user .message-content,
-    .chat-message.assistant .message-content {
-        max-width: 85%;
-    }
-    
-    .chat-input-container {
-        padding: 0.75rem;
     }
 }

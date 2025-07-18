@@ -11,6 +11,12 @@ from .serializers import (
     UserProfileSerializer, PersonalityQuizSerializer, QuizSubmissionSerializer
 )
 from .chat_service import ChatService
+from core.error_handlers import SecureErrorHandler
+from core.validators import ContentFilter, InputSanitizer
+from django.core.exceptions import ValidationError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def recommendations_dashboard(request):
@@ -102,7 +108,12 @@ def chat_message(request):
     if not request.data.get('message'):
         return JsonResponse({'error': 'Message is required'}, status=400)
     
-    user_message = request.data.get('message')
+    try:
+        # Validate and sanitize user message
+        user_message = ContentFilter.filter_chat_message(request.data.get('message'))
+    except ValidationError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    
     chat_service = ChatService()
     
     try:
@@ -137,11 +148,7 @@ def chat_message(request):
         })
     
     except Exception as e:
-        # Log the error for debugging
-        import traceback
-        print(f"Chat error: {str(e)}")
-        print(traceback.format_exc())
-        return JsonResponse({'error': str(e)}, status=500)
+        return SecureErrorHandler.json_error_response(e, "Chat Service", 500)
 
 
 @api_view(['GET'])
