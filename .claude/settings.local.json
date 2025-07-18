@@ -21,7 +21,9 @@
       "Bash(docker stop:*)",
       "Bash(docker rm:*)",
       "Bash(docker run:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(gh pr:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
