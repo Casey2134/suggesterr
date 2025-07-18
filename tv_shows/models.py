@@ -27,6 +27,16 @@ class TVShow(models.Model):
     vote_count = models.IntegerField(null=True, blank=True)
     popularity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
+    # Content rating for parental controls
+    tv_rating = models.CharField(max_length=10, blank=True, choices=[
+        ('TV-Y', 'All Children'),
+        ('TV-Y7', 'Children 7+'),
+        ('TV-G', 'General Audience'),
+        ('TV-PG', 'Parental Guidance'),
+        ('TV-14', 'Parents Strongly Cautioned'),
+        ('TV-MA', 'Mature Audiences'),
+    ])
+    
     # Genres
     genres = models.ManyToManyField(Genre, blank=True)
     

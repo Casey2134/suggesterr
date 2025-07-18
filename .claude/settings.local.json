@@ -23,7 +23,15 @@
       "Bash(docker run:*)",
       "Bash(docker logs:*)",
       "Bash(gh pr:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(chmod:*)",
+      "Bash(./create-release.sh:*)",
+      "Bash(docker system prune:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

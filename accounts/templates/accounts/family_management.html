@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Family Management - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<style>
+    .family-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .family-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+    }
+
+    .family-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .family-info {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .no-family-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .no-family-card h2 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .no-family-card p {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .member-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-color);
+    }
+
+    .member-card.admin {
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-color-rgb), 0.1);
+    }
+
+    .member-avatar {
+        width: 80px;
+        height: 80px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .member-avatar.admin {
+        background: linear-gradient(45deg, var(--accent-color), #ffd700);
+    }
+
+    .member-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .member-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .member-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--accent-color);
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .member-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .member-action-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--text-primary);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .member-action-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .member-badge {
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        background: var(--accent-color);
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+
+    .invite-member-card {
+        background: transparent;
+        border: 2px dashed var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 280px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .invite-member-card:hover {
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-color-rgb), 0.05);
+    }
+
+    .invite-icon {
+        font-size: 3rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .family-controls {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 3rem;
+    }
+
+    .family-controls h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .control-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .control-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+    }
+
+    .control-link:hover {
+        background: rgba(var(--accent-color-rgb), 0.1);
+        transform: translateX(4px);
+    }
+
+    .control-icon {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+    }
+
+    .control-text h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .control-text p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .activity-indicator {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #28a745;
+    }
+
+    .activity-indicator.inactive {
+        background: #dc3545;
+    }
+
+    .pending-requests-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="family-container">
+    <!-- Header -->
+    <div class="family-header">
+        <div>
+            <h1>Family Management</h1>
+            <p class="family-info" id="familyInfo">Loading family information...</p>
+        </div>
+        <div>
+            <button class="btn btn-secondary" onclick="showFamilyDashboard()">
+                <i class="fas fa-chart-line"></i> Family Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- No Family Section -->
+    <div class="no-family-card" id="noFamilyCard" style="display: none;">
+        <h2>Create Your Family Group</h2>
+        <p>Create a family group to manage multiple user accounts with parental controls, content filtering, and usage limits.</p>
+        <button class="btn btn-primary" onclick="showCreateFamilyModal()">
+            <i class="fas fa-plus-circle"></i> Create Family Group
+        </button>
+    </div>
+
+    <!-- Family Members Grid -->
+    <div class="members-grid" id="membersGrid">
+        <!-- Members will be loaded here -->
+    </div>
+
+    <!-- Family Controls Section -->
+    <div class="family-controls" id="familyControls" style="display: none;">
+        <h2>Family Controls</h2>
+        <div class="control-links">
+            <a href="#" onclick="showContentRequests()" class="control-link">
+                <i class="fas fa-hand-paper control-icon"></i>
+                <div class="control-text">
+                    <h3>Content Requests</h3>
+                    <p>Review and approve content requests from family members</p>
+                </div>
+                <div class="pending-requests-badge" id="pendingRequestsBadge" style="display: none;"></div>
+            </a>
+            <a href="#" onclick="showFamilyDashboard()" class="control-link">
+                <i class="fas fa-chart-line control-icon"></i>
+                <div class="control-text">
+                    <h3>Family Dashboard</h3>
+                    <p>Monitor viewing habits and family activity</p>
+                </div>
+            </a>
+            <a href="#" onclick="showContentFiltersModal()" class="control-link">
+                <i class="fas fa-shield-alt control-icon"></i>
+                <div class="control-text">
+                    <h3>Content Filters</h3>
+                    <p>Manage blocked content for family members</p>
+                </div>
+            </a>
+            <a href="#" onclick="showUsageLimitsModal()" class="control-link">
+                <i class="fas fa-clock control-icon"></i>
+                <div class="control-text">
+                    <h3>Usage Limits</h3>
+                    <p>Set daily, weekly, and time-based restrictions</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Create Family Modal -->
+<div class="modal" id="createFamilyModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Family Group</h2>
+            <button class="modal-close" onclick="closeModal('createFamilyModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="createFamilyForm">
+                <div class="form-group">
+                    <label for="familyName">Family Name</label>
+                    <input type="text" id="familyName" class="form-control" required maxlength="100" placeholder="Enter family name">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createFamilyModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Family</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+<div class="modal" id="inviteMemberModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Invite Family Member</h2>
+            <button class="modal-close" onclick="closeModal('inviteMemberModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="inviteMemberForm">
+                <div class="form-group">
+                    <label for="memberEmail">Email Address</label>
+                    <input type="email" id="memberEmail" class="form-control" required placeholder="Enter email address">
+                </div>
+                <div class="form-group">
+                    <label for="memberAge">Age</label>
+                    <input type="number" id="memberAge" class="form-control" required min="1" max="99" placeholder="Enter age">
+                </div>
+                <div class="form-group">
+                    <label for="memberMaxMovieRating">Maximum Movie Rating</label>
+                    <select id="memberMaxMovieRating" class="form-control" required>
+                        <option value="G">G - General Audiences</option>
+                        <option value="PG">PG - Parental Guidance</option>
+                        <option value="PG-13">PG-13 - Parents Strongly Cautioned</option>
+                        <option value="R">R - Restricted</option>
+                        <option value="NC-17">NC-17 - Adults Only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="memberMaxTvRating">Maximum TV Rating</label>
+                    <select id="memberMaxTvRating" class="form-control" required>
+                        <option value="TV-Y">TV-Y - All Children</option>
+                        <option value="TV-Y7">TV-Y7 - Children 7+</option>
+                        <option value="TV-G">TV-G - General Audience</option>
+                        <option value="TV-PG">TV-PG - Parental Guidance</option>
+                        <option value="TV-14">TV-14 - Parents Strongly Cautioned</option>
+                        <option value="TV-MA">TV-MA - Mature Audiences</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inviteMessage">Message (Optional)</label>
+                    <textarea id="inviteMessage" class="form-control" rows="3" placeholder="Add a personal message to the invitation"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('inviteMemberModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Member Settings Modal -->
+<div class="modal" id="memberSettingsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Member Settings</h2>
+            <button class="modal-close" onclick="closeModal('memberSettingsModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="memberSettingsForm">
+                <input type="hidden" id="editMemberId">
+                <div class="form-group">
+                    <label for="editMemberAge">Age</label>
+                    <input type="number" id="editMemberAge" class="form-control" required min="1" max="99">
+                </div>
+                <div class="form-group">
+                    <label for="editMemberMaxMovieRating">Maximum Movie Rating</label>
+                    <select id="editMemberMaxMovieRating" class="form-control" required>
+                        <option value="G">G - General Audiences</option>
+                        <option value="PG">PG - Parental Guidance</option>
+                        <option value="PG-13">PG-13 - Parents Strongly Cautioned</option>
+                        <option value="R">R - Restricted</option>
+                        <option value="NC-17">NC-17 - Adults Only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editMemberMaxTvRating">Maximum TV Rating</label>
+                    <select id="editMemberMaxTvRating" class="form-control" required>
+                        <option value="TV-Y">TV-Y - All Children</option>
+                        <option value="TV-Y7">TV-Y7 - Children 7+</option>
+                        <option value="TV-G">TV-G - General Audience</option>
+                        <option value="TV-PG">TV-PG - Parental Guidance</option>
+                        <option value="TV-14">TV-14 - Parents Strongly Cautioned</option>
+                        <option value="TV-MA">TV-MA - Mature Audiences</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editMemberActive">
+                        Account Active
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('memberSettingsModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'accounts/js/family-management.js' %}"></script>
+{% endblock %}

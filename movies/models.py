@@ -21,6 +21,15 @@ class Movie(models.Model):
     vote_count = models.IntegerField(null=True, blank=True)
     popularity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
+    # Content rating for parental controls
+    mpaa_rating = models.CharField(max_length=10, blank=True, choices=[
+        ('G', 'General Audiences'),
+        ('PG', 'Parental Guidance Suggested'),
+        ('PG-13', 'Parents Strongly Cautioned'),
+        ('R', 'Restricted'),
+        ('NC-17', 'Adults Only'),
+    ])
+    
     # Genres
     genres = models.ManyToManyField(Genre, blank=True)
     

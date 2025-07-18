@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Family Dashboard - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        position: relative;
+    }
+
+    .dashboard-card h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .member-summary {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    .member-avatar {
+        width: 50px;
+        height: 50px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .member-info h3 {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .member-info p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--accent-color);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .activity-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-content h4 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .activity-content p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .activity-time {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1>Family Dashboard</h1>
+            <p id="dashboardInfo">Loading family dashboard...</p>
+        </div>
+        <div>
+            <button class="btn btn-secondary" onclick="goToFamilyManagement()">
+                <i class="fas fa-users"></i> Family Management
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+        <!-- Family Overview Card -->
+        <div class="dashboard-card">
+            <h2>Family Overview</h2>
+            <div id="familyOverview">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalMembers">-</div>
+                        <div class="stat-label">Members</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="activeMembers">-</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="pendingRequests">-</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalRequests">-</div>
+                        <div class="stat-label">Total Requests</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="dashboard-card">
+            <h2>Recent Activity</h2>
+            <div class="activity-list" id="recentActivity">
+                <!-- Activity items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Family Members Section -->
+    <div class="dashboard-card">
+        <h2>Family Members</h2>
+        <div id="familyMembers">
+            <!-- Member summaries will be loaded here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let familyDashboard = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadFamilyDashboard();
+});
+
+// Load family dashboard data
+async function loadFamilyDashboard() {
+    try {
+        const response = await fetch('/accounts/api/family/family-management/dashboard/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        if (response.ok) {
+            familyDashboard = await response.json();
+            renderDashboard();
+        } else {
+            document.getElementById('dashboardInfo').textContent = 'No family group found';
+        }
+    } catch (error) {
+        console.error('Error loading family dashboard:', error);
+        document.getElementById('dashboardInfo').textContent = 'Error loading dashboard';
+    }
+}
+
+// Render dashboard data
+function renderDashboard() {
+    if (!familyDashboard || familyDashboard.length === 0) {
+        document.getElementById('dashboardInfo').textContent = 'No family members found';
+        return;
+    }
+
+    document.getElementById('dashboardInfo').textContent = `Dashboard for ${familyDashboard.length} family members`;
+
+    // Calculate overview stats
+    const totalMembers = familyDashboard.length;
+    const activeMembers = familyDashboard.filter(member => member.is_active).length;
+    const pendingRequests = familyDashboard.reduce((sum, member) => sum + member.pending_requests, 0);
+    const totalRequests = familyDashboard.reduce((sum, member) => sum + member.total_requests, 0);
+
+    // Update overview
+    document.getElementById('totalMembers').textContent = totalMembers;
+    document.getElementById('activeMembers').textContent = activeMembers;
+    document.getElementById('pendingRequests').textContent = pendingRequests;
+    document.getElementById('totalRequests').textContent = totalRequests;
+
+    // Render family members
+    renderFamilyMembers();
+    
+    // Render recent activity
+    renderRecentActivity();
+}
+
+// Render family members
+function renderFamilyMembers() {
+    const container = document.getElementById('familyMembers');
+    container.innerHTML = '';
+
+    familyDashboard.forEach(member => {
+        const memberElement = document.createElement('div');
+        memberElement.className = 'member-summary';
+        
+        const initials = member.full_name ? 
+            member.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 
+            member.username[0].toUpperCase();
+
+        memberElement.innerHTML = `
+            <div class="member-avatar">${initials}</div>
+            <div class="member-info">
+                <h3>${member.full_name || member.username} ${member.is_admin ? '(Admin)' : ''}</h3>
+                <p>${member.age ? `Age ${member.age}` : 'No age set'} • ${member.is_active ? 'Active' : 'Inactive'}</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${member.pending_requests}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${member.approved_requests}</div>
+                    <div class="stat-label">Approved</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${member.denied_requests}</div>
+                    <div class="stat-label">Denied</div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(memberElement);
+    });
+}
+
+// Render recent activity
+function renderRecentActivity() {
+    const container = document.getElementById('recentActivity');
+    container.innerHTML = '';
+
+    // Collect all activities from all members
+    const allActivities = [];
+    familyDashboard.forEach(member => {
+        if (member.recent_activities) {
+            member.recent_activities.forEach(activity => {
+                allActivities.push({
+                    ...activity,
+                    member_name: member.full_name || member.username
+                });
+            });
+        }
+    });
+
+    // Sort by timestamp
+    allActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Show only the most recent 10 activities
+    allActivities.slice(0, 10).forEach(activity => {
+        const activityElement = document.createElement('div');
+        activityElement.className = 'activity-item';
+        
+        const icon = getActivityIcon(activity.activity_type);
+        const timeAgo = getTimeAgo(activity.timestamp);
+
+        activityElement.innerHTML = `
+            <div class="activity-icon">
+                <i class="fas ${icon}"></i>
+            </div>
+            <div class="activity-content">
+                <h4>${activity.member_name}</h4>
+                <p>${activity.description || getActivityDescription(activity.activity_type)}</p>
+            </div>
+            <div class="activity-time">${timeAgo}</div>
+        `;
+
+        container.appendChild(activityElement);
+    });
+
+    if (allActivities.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No recent activity</p>';
+    }
+}
+
+// Get activity icon
+function getActivityIcon(activityType) {
+    const iconMap = {
+        'content_view': 'fa-play',
+        'content_request': 'fa-hand-paper',
+        'request_approved': 'fa-check',
+        'request_denied': 'fa-times',
+        'content_blocked': 'fa-shield-alt',
+        'limit_exceeded': 'fa-clock',
+        'login': 'fa-sign-in-alt',
+        'logout': 'fa-sign-out-alt'
+    };
+    return iconMap[activityType] || 'fa-info';
+}
+
+// Get activity description
+function getActivityDescription(activityType) {
+    const descriptionMap = {
+        'content_view': 'Viewed content',
+        'content_request': 'Requested content access',
+        'request_approved': 'Request approved',
+        'request_denied': 'Request denied',
+        'content_blocked': 'Content blocked',
+        'limit_exceeded': 'Usage limit exceeded',
+        'login': 'Logged in',
+        'logout': 'Logged out'
+    };
+    return descriptionMap[activityType] || 'Activity occurred';
+}
+
+// Get time ago
+function getTimeAgo(timestamp) {
+    const now = new Date();
+    const activityTime = new Date(timestamp);
+    const diffInMinutes = Math.floor((now - activityTime) / (1000 * 60));
+
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+}
+
+// Navigation
+function goToFamilyManagement() {
+    window.location.href = '/accounts/family-management/';
+}
+
+// Utility functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

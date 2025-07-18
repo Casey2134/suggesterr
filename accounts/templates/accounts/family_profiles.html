@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Family Profiles - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profiles-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .profiles-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3rem;
+    }
+
+    .profiles-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .profile-count {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .profiles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .profile-card {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+    }
+
+    .profile-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-color);
+    }
+
+    .profile-card.active {
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-color-rgb), 0.1);
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+    }
+
+    .profile-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .profile-info {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .profile-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .profile-action-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--text-primary);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .profile-action-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .add-profile-card {
+        background: transparent;
+        border: 2px dashed var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 250px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .add-profile-card:hover {
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-color-rgb), 0.05);
+    }
+
+    .add-profile-icon {
+        font-size: 3rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .parental-controls {
+        background: var(--bg-card);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 3rem;
+    }
+
+    .parental-controls h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .control-links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .control-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+    }
+
+    .control-link:hover {
+        background: rgba(var(--accent-color-rgb), 0.1);
+        transform: translateX(4px);
+    }
+
+    .control-icon {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+    }
+
+    .control-text h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .control-text p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .profile-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: var(--accent-color);
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profiles-container">
+    <!-- Header -->
+    <div class="profiles-header">
+        <div>
+            <h1>Family Profiles</h1>
+            <p class="profile-count">{{ profile_count }} of {{ max_profiles }} profiles used</p>
+        </div>
+        <a href="{% url 'accounts:parental_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-chart-line"></i> Parental Dashboard
+        </a>
+    </div>
+
+    <!-- Profiles Grid -->
+    <div class="profiles-grid">
+        {% for profile in profiles %}
+        <div class="profile-card {% if profile.id == active_profile %}active{% endif %}" 
+             data-profile-id="{{ profile.id }}"
+             onclick="switchProfile({{ profile.id }})">
+            {% if not profile.is_active %}
+            <div class="profile-badge" title="Profile Inactive">
+                <i class="fas fa-pause"></i>
+            </div>
+            {% endif %}
+            <div class="profile-actions">
+                <button class="profile-action-btn" onclick="editProfile(event, {{ profile.id }})" title="Edit Profile">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="profile-action-btn" onclick="deleteProfile(event, {{ profile.id }})" title="Delete Profile">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="profile-avatar">
+                {% if profile.avatar_url %}
+                    <img src="{{ profile.avatar_url }}" alt="{{ profile.profile_name }}">
+                {% else %}
+                    <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <h3 class="profile-name">{{ profile.profile_name }}</h3>
+            <div class="profile-info">
+                <p>Age {{ profile.age }}</p>
+                <p>{{ profile.max_movie_rating }} / {{ profile.max_tv_rating }}</p>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if profile_count < max_profiles %}
+        <div class="profile-card add-profile-card" onclick="showAddProfileModal()">
+            <i class="fas fa-plus-circle add-profile-icon"></i>
+            <p>Add Profile</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Parental Controls Section -->
+    <div class="parental-controls">
+        <h2>Parental Controls</h2>
+        <div class="control-links">
+            <a href="{% url 'accounts:content_requests' %}" class="control-link">
+                <i class="fas fa-hand-paper control-icon"></i>
+                <div class="control-text">
+                    <h3>Content Requests</h3>
+                    <p>Review and approve content requests from child profiles</p>
+                </div>
+            </a>
+            <a href="{% url 'accounts:parental_dashboard' %}" class="control-link">
+                <i class="fas fa-chart-line control-icon"></i>
+                <div class="control-text">
+                    <h3>Activity Dashboard</h3>
+                    <p>Monitor viewing habits and profile activity</p>
+                </div>
+            </a>
+            <a href="#" onclick="showContentFiltersModal()" class="control-link">
+                <i class="fas fa-shield-alt control-icon"></i>
+                <div class="control-text">
+                    <h3>Content Filters</h3>
+                    <p>Manage blocked content for each profile</p>
+                </div>
+            </a>
+            <a href="#" onclick="showUsageLimitsModal()" class="control-link">
+                <i class="fas fa-clock control-icon"></i>
+                <div class="control-text">
+                    <h3>Usage Limits</h3>
+                    <p>Set daily, weekly, and time-based restrictions</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Add Profile Modal -->
+<div class="modal" id="addProfileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Family Profile</h2>
+            <button class="modal-close" onclick="closeModal('addProfileModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="addProfileForm">
+                <div class="form-group">
+                    <label for="profileName">Profile Name</label>
+                    <input type="text" id="profileName" class="form-control" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="profileAge">Age</label>
+                    <input type="number" id="profileAge" class="form-control" required min="1" max="99">
+                </div>
+                <div class="form-group">
+                    <label for="maxMovieRating">Maximum Movie Rating</label>
+                    <select id="maxMovieRating" class="form-control" required>
+                        <option value="G">G - General Audiences</option>
+                        <option value="PG">PG - Parental Guidance</option>
+                        <option value="PG-13">PG-13 - Parents Strongly Cautioned</option>
+                        <option value="R">R - Restricted</option>
+                        <option value="NC-17">NC-17 - Adults Only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxTvRating">Maximum TV Rating</label>
+                    <select id="maxTvRating" class="form-control" required>
+                        <option value="TV-Y">TV-Y - All Children</option>
+                        <option value="TV-Y7">TV-Y7 - Children 7+</option>
+                        <option value="TV-G">TV-G - General Audience</option>
+                        <option value="TV-PG">TV-PG - Parental Guidance</option>
+                        <option value="TV-14">TV-14 - Parents Strongly Cautioned</option>
+                        <option value="TV-MA">TV-MA - Mature Audiences</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addProfileModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal" id="editProfileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Profile</h2>
+            <button class="modal-close" onclick="closeModal('editProfileModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="editProfileForm">
+                <input type="hidden" id="editProfileId">
+                <div class="form-group">
+                    <label for="editProfileName">Profile Name</label>
+                    <input type="text" id="editProfileName" class="form-control" required maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="editProfileAge">Age</label>
+                    <input type="number" id="editProfileAge" class="form-control" required min="1" max="99">
+                </div>
+                <div class="form-group">
+                    <label for="editMaxMovieRating">Maximum Movie Rating</label>
+                    <select id="editMaxMovieRating" class="form-control" required>
+                        <option value="G">G - General Audiences</option>
+                        <option value="PG">PG - Parental Guidance</option>
+                        <option value="PG-13">PG-13 - Parents Strongly Cautioned</option>
+                        <option value="R">R - Restricted</option>
+                        <option value="NC-17">NC-17 - Adults Only</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editMaxTvRating">Maximum TV Rating</label>
+                    <select id="editMaxTvRating" class="form-control" required>
+                        <option value="TV-Y">TV-Y - All Children</option>
+                        <option value="TV-Y7">TV-Y7 - Children 7+</option>
+                        <option value="TV-G">TV-G - General Audience</option>
+                        <option value="TV-PG">TV-PG - Parental Guidance</option>
+                        <option value="TV-14">TV-14 - Parents Strongly Cautioned</option>
+                        <option value="TV-MA">TV-MA - Mature Audiences</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editProfileActive">
+                        Profile Active
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editProfileModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'accounts/js/family-profiles.js' %}"></script>
+{% endblock %}
