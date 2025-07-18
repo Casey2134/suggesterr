@@ -1,391 +1,317 @@
 # 🎬 Suggesterr - AI-Powered Movie Recommendation System
 
-A comprehensive Django web application for intelligent movie and TV show recommendations with advanced AI-powered suggestions and seamless integration with popular media management tools like Jellyfin, Plex, Radarr, and Sonarr.
+A secure, production-ready Django web application for intelligent movie and TV show recommendations with advanced AI-powered suggestions and seamless integration with popular media management tools.
 
-## ✨ Key Features
+## ✨ Features
 
-### 🤖 Advanced AI Recommendations
-- **Google Gemini 2.0 Flash**: State-of-the-art AI recommendations using Google's latest language model
-- **Library-Aware AI**: Smart recommendations that consider your existing Plex/Jellyfin library
-- **Mood-Based Suggestions**: Get recommendations based on your current mood (happy, sad, excited, etc.)
-- **Similar Movie Discovery**: Find movies similar to ones you love
-- **Personalized AI**: Recommendations adapt to your preferences and viewing history
-- **Collaborative Filtering**: Enhanced with AI-powered personalized suggestions
+### 🔒 **Security First**
+- **Field-level encryption** for sensitive user data (API keys)
+- **Rate limiting** on authentication and API endpoints
+- **Content Security Policy** and comprehensive security headers
+- **Input validation** and sanitization to prevent XSS/injection attacks
+- **Secure error handling** that prevents information disclosure
+- **HTTPS/SSL ready** with proper security configurations
 
-### 📚 Smart Library Integration
-- **Library Context Awareness**: AI avoids recommending movies you already own
-- **Collection Complementing**: Suggestions that fill gaps in your existing library
-- **Plex & Jellyfin Support**: Seamless integration with your media servers
-- **Real-Time Availability**: Check movie availability across your media libraries
+### 🤖 **AI-Powered Recommendations**
+- **Google Gemini 2.0 Flash** integration for intelligent recommendations
+- **Library-aware AI** that considers your existing Plex/Jellyfin collection
+- **Mood-based suggestions** and personalized recommendations
+- **Chat-based interface** for natural language movie discovery
 
-### 🎭 Comprehensive Media Management
-- **Movie & TV Show Database**: Complete database synced with The Movie Database (TMDB)
-- **Download Automation**: Request movies/shows through Radarr and Sonarr
-- **User Ratings & Watchlists**: Rate content and maintain personal watchlists
-- **Genre Discovery**: Browse by genres with advanced filtering
-- **Popular & Trending**: Stay updated with trending and top-rated content
+### 📚 **Media Management Integration**
+- **Plex & Jellyfin** support with encrypted API key storage
+- **Radarr & Sonarr** integration for automated downloads
+- **TMDB integration** for comprehensive movie/TV show database
+- **Real-time availability** checking across your media libraries
 
-### 🔧 Technical Excellence
-- **Modern REST API**: Comprehensive API for all functionality
-- **Responsive Web Interface**: Mobile-friendly, modern UI with Bootstrap 5
-- **Docker Ready**: Easy deployment with Docker and Docker Compose
-- **Background Processing**: Celery integration for heavy tasks
-- **Comprehensive Testing**: Full test suite with API and integration tests
+### 🛡️ **Production Ready**
+- **Docker containerized** with secure multi-stage builds
+- **PostgreSQL** support with connection pooling
+- **Redis** caching and session management
+- **Nginx** reverse proxy with security headers
+- **Comprehensive logging** and error monitoring
 
-## Quick Start
+## 🚀 Quick Start (Simple Docker Setup)
+
+### Easy Single-Container Deployment (Like Radarr/Sonarr)
+
+```yaml
+# docker-compose.yml
+services:
+  suggesterr:
+    image: suggesterr:latest
+    container_name: suggesterr
+    environment:
+      # Required API Keys
+      - TMDB_API_KEY=your-tmdb-api-key
+      - GOOGLE_GEMINI_API_KEY=your-gemini-api-key
+      
+      # Optional - Admin user
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_PASSWORD=admin123
+      - DJANGO_SUPERUSER_EMAIL=admin@suggesterr.local
+      
+      # Optional - Media server integration
+      - JELLYFIN_URL=http://your-jellyfin:8096
+      - JELLYFIN_API_KEY=your-jellyfin-key
+      
+      - TZ=Etc/UTC
+    volumes:
+      - /path/to/suggesterr/config:/config
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+```
+
+### Get Required API Keys
+
+1. **TMDB API Key**: https://www.themoviedb.org/settings/api
+2. **Google Gemini API Key**: https://ai.google.dev/
+
+### Deploy
+
+```bash
+# Start container
+docker-compose up -d
+
+# Access at http://localhost:8000
+```
+
+**That's it!** Everything (database, cache, web server) is included in one container.
+
+See [DOCKER_SIMPLE_SETUP.md](DOCKER_SIMPLE_SETUP.md) for detailed instructions.
+
+---
+
+## 🏢 Advanced Production Setup
+
+For advanced multi-container production deployments with separate database servers:
 
 ### Prerequisites
 
 - Docker and Docker Compose
-- Python 3.11+ (for local development)
-- PostgreSQL (handled by Docker)
-- Redis (handled by Docker)
+- Domain name (for production SSL)
+- Required API keys (see configuration section)
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd suggesterr
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys and service URLs
-   ```
-
-3. **Start with Docker Compose**
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Run database migrations**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
-
-5. **Create a superuser**
-   ```bash
-   docker-compose exec web python manage.py createsuperuser
-   ```
-
-6. **Sync movie data**
-   ```bash
-   docker-compose exec web python manage.py sync_movies
-   ```
-
-7. **Access the application**
-   - Web Interface: http://localhost:8000
-   - Admin Interface: http://localhost:8000/admin
-   - API Documentation: http://localhost:8000/api/
-
-## Local Development
-
-### Setup
-
-1. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\\Scripts\\activate
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Set up local database**
-   ```bash
-   # Start PostgreSQL and Redis with Docker
-   docker-compose up db redis
-   
-   # In another terminal
-   python manage.py migrate
-   python manage.py createsuperuser
-   ```
-
-4. **Run development server**
-   ```bash
-   python manage.py runserver
-   ```
-
-### Management Commands
-
-- **Sync movies from TMDB**
-  ```bash
-  python manage.py sync_movies [--genres-only] [--popular-pages=5]
-  ```
-
-- **Sync availability from media servers**
-  ```bash
-  python manage.py sync_availability
-  ```
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file with the following variables:
-
-```env
-# Django Settings
-SECRET_KEY=your-secret-key-here
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Database
-DB_NAME=suggesterr
-DB_USER=suggesterr
-DB_PASSWORD=suggesterr
-DB_HOST=localhost
-DB_PORT=5432
-
-# Redis
-REDIS_URL=redis://localhost:6379/0
-
-# API Keys (Required)
-TMDB_API_KEY=your-tmdb-api-key
-
-# AI Service - Google Gemini (Required for AI recommendations)
-GOOGLE_GEMINI_API_KEY=your-gemini-api-key
-
-# Media Server Integration (Optional - for library context)
-JELLYFIN_URL=http://localhost:8096
-JELLYFIN_API_KEY=your-jellyfin-api-key
-PLEX_URL=http://localhost:32400
-PLEX_TOKEN=your-plex-token
-
-# Download Management (Optional)
-RADARR_URL=http://localhost:7878
-RADARR_API_KEY=your-radarr-api-key
-SONARR_URL=http://localhost:8989
-SONARR_API_KEY=your-sonarr-api-key
-```
-
-### API Keys Setup
-
-#### Required
-1. **TMDB API Key**: Sign up at https://www.themoviedb.org/settings/api
-
-#### AI Service (Required for AI recommendations)
-2. **Google Gemini API Key**: Get from https://ai.google.dev/ - Powers all AI recommendations
-
-#### Media Server Integration (Optional - Enables Library Context)
-3. **Jellyfin API Key**: Generate in Jellyfin Dashboard > API Keys
-4. **Plex Token**: Follow https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
-
-#### Download Management (Optional)
-5. **Radarr/Sonarr API Keys**: Found in Settings > General > Security
-
-### 🚀 Library Context Feature
-
-To enable smart library-aware recommendations:
-
-1. **Configure your media server** in User Settings:
-   - Choose either Jellyfin or Plex
-   - Enter your server URL and API key/token
-   - Save settings
-
-2. **Benefits of Library Context**:
-   - AI won't recommend movies you already own
-   - Suggestions complement your existing collection
-   - Recommendations fill gaps in similar genres/themes
-   - Works automatically once configured
-
-## API Documentation
-
-### Authentication
-
-The API uses session-based authentication. Most endpoints require authentication.
-
-### Endpoints
-
-#### 🎬 Movies
-- `GET /api/movies/` - List movies with filtering
-- `GET /api/movies/{id}/` - Get movie details
-- `GET /api/movies/popular/` - Get popular movies
-- `GET /api/movies/top_rated/` - Get top-rated movies
-- `GET /api/movies/by_genre/?genre_id=28` - Get movies by genre ID
-- `POST /api/movies/{id}/request_movie/` - Request movie on Radarr
-
-#### 🤖 AI Recommendations (New!)
-- `GET /api/movies/ai_recommendations/` - AI-powered personalized recommendations
-  - Parameters: `genres`, `mood`, `year_range`
-  - **Library-aware**: Automatically considers your Plex/Jellyfin library
-- `GET /api/movies/mood_recommendations/` - Mood-based recommendations
-  - Parameters: `mood` (happy, sad, excited, relaxed, romantic, adventurous, thoughtful, nostalgic)
-- `GET /api/movies/similar_movies/` - Find similar movies
-  - Parameters: `title` (movie title to find similar movies for)
-
-#### 📺 TV Shows
-- `GET /api/tv-shows/` - List TV shows with filtering
-- `GET /api/tv-shows/{id}/` - Get TV show details
-- `GET /api/tv-shows/popular/` - Get popular TV shows
-- `GET /api/tv-shows/ai_recommendations/` - AI-powered TV recommendations
-- `GET /api/tv-shows/mood_recommendations/` - Mood-based TV recommendations
-- `POST /api/tv-shows/{id}/request_tv_show/` - Request TV show on Sonarr
-
-#### 🎭 Genres
-- `GET /api/genres/` - List all genres
-
-#### ⭐ User Ratings
-- `GET /api/ratings/` - Get user's ratings
-- `POST /api/ratings/` - Rate a movie
-
-#### 📋 Watchlist
-- `GET /api/watchlist/` - Get user's watchlist
-- `POST /api/watchlist/` - Add movie to watchlist
-
-#### 🎯 Recommendations
-- `GET /api/recommendations/` - Get user's recommendations
-- `POST /api/recommendations/generate/` - Generate new recommendations (with library context)
-
-#### ⚙️ User Settings
-- `GET /api/settings/` - Get user settings (including media server config)
-- `POST /api/settings/` - Update user settings
-
-### Query Parameters
-
-- `search` - Search movies by title or overview
-- `genre` - Filter by genre name
-- `available_only` - Show only available movies (true/false)
-
-## Testing
-
-### Run Tests
+### 1. Clone and Setup
 
 ```bash
-# Run all tests
+git clone <repository-url>
+cd suggesterr
+cp .env.example .env
+```
+
+### 2. Deploy with Docker
+
+```bash
+# Production deployment
+docker-compose -f docker-compose.prod.yml up -d
+
+# Run migrations
+docker-compose -f docker-compose.prod.yml exec web python manage.py migrate
+
+# Create superuser
+docker-compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
+
+# Sync movie data
+docker-compose -f docker-compose.prod.yml exec web python manage.py sync_movies
+```
+
+## 🔧 Configuration
+
+### Required API Keys
+
+1. **TMDB API Key** 
+   - Sign up at https://www.themoviedb.org/settings/api
+   - Free tier available
+
+2. **Google Gemini API Key**
+   - Get from https://ai.google.dev/
+   - Required for AI recommendations
+
+### Optional Integrations
+
+3. **Jellyfin API Key**
+   - Dashboard → API Keys → Add API Key
+
+4. **Plex Token**
+   - Follow: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+
+5. **Radarr/Sonarr API Keys**
+   - Settings → General → Security → API Key
+
+### Security Configuration
+
+The application includes comprehensive security measures:
+
+- **Rate Limiting**: 5 login attempts/min, 100 API requests/min
+- **Content Security Policy**: Prevents XSS attacks
+- **HSTS**: Enforces HTTPS connections
+- **Secure Cookies**: HttpOnly and Secure flags enabled
+- **Input Validation**: All user input is sanitized
+- **Error Handling**: Prevents information disclosure
+
+## 📊 Architecture
+
+### Backend Stack
+- **Django 4.2** - Web framework
+- **Django REST Framework** - API
+- **PostgreSQL** - Database
+- **Redis** - Caching/Sessions
+- **Celery** - Background tasks
+
+### Security Features
+- **Field-level encryption** for API keys
+- **Rate limiting** with django-ratelimit
+- **CSP** with django-csp
+- **Input sanitization** and validation
+- **Secure error handling**
+
+### Infrastructure
+- **Docker** containerization
+- **Nginx** reverse proxy
+- **SSL/TLS** termination
+- **Security headers**
+
+## 🛠️ Development
+
+### Local Development
+
+```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+export DEBUG=True
+export SECRET_KEY=your-dev-secret-key
+export TMDB_API_KEY=your-tmdb-key
+export GOOGLE_GEMINI_API_KEY=your-gemini-key
+
+# Run migrations
+python manage.py migrate
+
+# Create superuser
+python manage.py createsuperuser
+
+# Start development server
+python manage.py runserver
+```
+
+### Testing
+
+```bash
+# Run tests
 python manage.py test
 
 # Run with coverage
 coverage run --source='.' manage.py test
 coverage report
-coverage html  # Generate HTML report
+coverage html
 ```
 
-### Test Structure
+## 🔐 Security Features
 
-- **Model Tests**: Test database models and relationships
-- **API Tests**: Test REST API endpoints
-- **Service Tests**: Test business logic services
-- **Integration Tests**: Test full application flow
+### Authentication & Authorization
+- Session-based authentication
+- Rate-limited login attempts
+- CSRF protection
+- Secure password validation
 
-## Deployment
+### Data Protection
+- Field-level encryption for sensitive data
+- Secure API key storage
+- Input validation and sanitization
+- XSS protection
 
-### Docker Production
+### Infrastructure Security
+- HTTPS/SSL enforcement
+- Security headers (CSP, HSTS, X-Frame-Options)
+- Secure Docker configuration
+- Network isolation
 
-1. **Build production image**
-   ```bash
-   docker build -t suggesterr:latest .
-   ```
+### Monitoring & Logging
+- Comprehensive logging
+- Error tracking
+- Security event monitoring
+- Audit trails
 
-2. **Use production docker-compose**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
+## 📈 Performance
 
-### Manual Deployment
+### Optimizations
+- Redis caching
+- Database query optimization
+- Static file compression
+- CDN-ready static files
 
-1. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Scalability
+- Horizontal scaling with Docker
+- Load balancer ready
+- Database connection pooling
+- Background task processing
 
-2. **Configure settings**
-   ```bash
-   export DJANGO_SETTINGS_MODULE=suggesterr.settings
-   export DEBUG=False
-   ```
+## 🚨 Security Checklist
 
-3. **Run migrations and collect static files**
-   ```bash
-   python manage.py migrate
-   python manage.py collectstatic
-   ```
+Before production deployment:
 
-4. **Start with Gunicorn**
-   ```bash
-   gunicorn suggesterr.wsgi:application --bind 0.0.0.0:8000
-   ```
+- [ ] Generate secure SECRET_KEY
+- [ ] Configure HTTPS/SSL certificates
+- [ ] Set DEBUG=False
+- [ ] Configure ALLOWED_HOSTS
+- [ ] Generate encryption key for API keys
+- [ ] Set up database backups
+- [ ] Configure log monitoring
+- [ ] Review security headers
+- [ ] Test rate limiting
+- [ ] Verify input validation
 
-## Architecture
+## 📋 API Documentation
 
-### Backend
+### Authentication Endpoints
+- `POST /accounts/login/` - User login
+- `POST /accounts/register/` - User registration
+- `POST /accounts/logout/` - User logout
 
-- **Django**: Web framework
-- **Django REST Framework**: API framework
-- **PostgreSQL**: Primary database
-- **Redis**: Caching and Celery broker
-- **Celery**: Background task processing
+### Movie Endpoints
+- `GET /api/movies/` - List movies
+- `GET /api/movies/{id}/` - Movie details
+- `GET /api/movies/ai_recommendations/` - AI recommendations
+- `POST /api/movies/{id}/request_movie/` - Request on Radarr
 
-### Frontend
+### TV Show Endpoints
+- `GET /api/tv-shows/` - List TV shows
+- `GET /api/tv-shows/ai_recommendations/` - AI recommendations
+- `POST /api/tv-shows/{id}/request_tv_show/` - Request on Sonarr
 
-- **Bootstrap 5**: CSS framework
-- **Vanilla JavaScript**: Frontend logic
-- **Responsive Design**: Mobile-friendly interface
+### Chat Endpoints
+- `POST /api/chat/message/` - Send chat message
+- `GET /api/chat/history/` - Get chat history
 
-### External Integrations
-
-- **TMDB**: Comprehensive movie and TV show data
-- **Google Gemini 2.0 Flash**: Advanced AI engine for intelligent recommendations
-- **Jellyfin/Plex**: Media server integration with library context awareness
-- **Radarr/Sonarr**: Automated download management
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new features
+5. Ensure all security checks pass
+6. Submit a pull request
 
-### Code Style
-
-- Follow PEP 8 for Python code
-- Use Django best practices
-- Write tests for new features
-- Document your code
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Database connection error**
-   - Check PostgreSQL is running
-   - Verify database credentials in `.env`
-
-2. **TMDB API errors**
-   - Verify API key is correct
-   - Check rate limiting
-
-3. **Media server integration issues**
-   - Verify service URLs are accessible
-   - Check API keys/tokens are valid
-
-4. **Docker build fails**
-   - Ensure Docker has enough memory
-   - Check for conflicting port usage
-
-### Logs
-
-```bash
-# Docker logs
-docker-compose logs web
-docker-compose logs db
-
-# Django logs
-python manage.py runserver --settings=suggesterr.settings
-```
-
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-- The Movie Database (TMDB) for movie data
-- Google Gemini for AI recommendations
-- Django and Django REST Framework communities
-- Bootstrap for the UI framework
+- TMDB for movie data
+- Google Gemini for AI capabilities
+- Django and DRF communities
+- Security research community
+
+---
+
+**⚠️ Security Note**: This application has been security hardened and is ready for production deployment. Always keep dependencies updated and monitor security advisories.

@@ -129,11 +129,15 @@ class MovieViewSet(viewsets.ViewSet):
             movie_id = int(pk)
             movie = self.tmdb_service.get_movie_details(movie_id)
             if movie:
-                return Response(movie)
+                # Add local status information for consistency with other endpoints
+                movie_with_status = self._add_local_status([movie])
+                return Response(movie_with_status[0] if movie_with_status else movie)
             else:
                 return Response({'error': 'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
         except ValueError:
             return Response({'error': 'Invalid movie ID'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Server error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=False, methods=['get'])
     def popular(self, request):

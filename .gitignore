@@ -114,9 +114,17 @@ dmypy.json
 # Django
 staticfiles/
 media/
+db.sqlite3
+*.log
 
 # Docker
 .dockerignore
+docker-compose.test.yml
+docker-compose.prod.yml
+docker-compose.simple.yml
+
+# Build artifacts
+deployment-package/
 
 # IDE
 .vscode/

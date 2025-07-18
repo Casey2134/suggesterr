@@ -142,7 +142,7 @@ async function loadQuizStatus() {
                 completionStats.innerHTML = `
                     <div class="quiz-stat">
                         <i class="fas fa-heart"></i>
-                        <span>${profile.preferred_genres ? profile.preferred_genres.split(', ').length : 0} genres</span>
+                        <span>${profile.preferred_genres && Array.isArray(profile.preferred_genres) ? profile.preferred_genres.length : (profile.preferred_genres && typeof profile.preferred_genres === 'string' ? profile.preferred_genres.split(', ').length : 0)} genres</span>
                     </div>
                     <div class="quiz-stat">
                         <i class="fas fa-calendar"></i>
@@ -219,175 +219,140 @@ async function retakeQuiz() {
     }
 }
 
-// Settings Functions
+// Settings Functions - simplified since we're using Django forms now
 function loadSettings() {
-    // Load user profile data
-    loadUserProfile();
+    // Load quiz status
+    loadQuizStatus();
     
-    // Load saved settings from localStorage
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.getElementById('settingsTheme').value = savedTheme;
-    
-    const savedRadarrUrl = localStorage.getItem('radarrUrl') || '';
-    document.getElementById('settingsRadarrUrl').value = savedRadarrUrl;
-    
-    const savedRadarrApiKey = localStorage.getItem('radarrApiKey') || '';
-    document.getElementById('settingsRadarrApiKey').value = savedRadarrApiKey;
-    
-    const savedSonarrUrl = localStorage.getItem('sonarrUrl') || '';
-    document.getElementById('settingsSonarrUrl').value = savedSonarrUrl;
-    
-    const savedSonarrApiKey = localStorage.getItem('sonarrApiKey') || '';
-    document.getElementById('settingsSonarrApiKey').value = savedSonarrApiKey;
-    
-    const savedServerType = localStorage.getItem('serverType') || '';
-    document.getElementById('settingsServerType').value = savedServerType;
-    
-    const savedServerUrl = localStorage.getItem('serverUrl') || '';
-    document.getElementById('settingsServerUrl').value = savedServerUrl;
-    
-    const savedServerApiKey = localStorage.getItem('serverApiKey') || '';
-    document.getElementById('settingsServerApiKey').value = savedServerApiKey;
-}
-
-async function loadUserProfile() {
-    try {
-        // This would typically come from an API endpoint
-        // For now, we'll use placeholder data
-        const user = {
-            username: 'Current User',
-            email: 'user@example.com'
-        };
-        
-        document.getElementById('settingsUsername').value = user.username;
-        document.getElementById('settingsEmail').value = user.email;
-    } catch (error) {
-        console.error('Error loading user profile:', error);
+    // Apply current theme from the form
+    const themeSelect = document.querySelector('select[name="theme"]');
+    if (themeSelect && themeSelect.value) {
+        applyTheme(themeSelect.value);
+    } else {
+        // Fallback to saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        applyTheme(savedTheme);
     }
 }
 
 // App object for global access (maintaining compatibility)
 window.app = {
-    saveSettings: function() {
+    
+    testConnections: async function() {
         try {
-            // Get all settings values
-            const settings = {
-                theme: document.getElementById('settingsTheme').value,
-                radarrUrl: document.getElementById('settingsRadarrUrl').value.trim(),
-                radarrApiKey: document.getElementById('settingsRadarrApiKey').value.trim(),
-                sonarrUrl: document.getElementById('settingsSonarrUrl').value.trim(),
-                sonarrApiKey: document.getElementById('settingsSonarrApiKey').value.trim(),
-                serverType: document.getElementById('settingsServerType').value,
-                serverUrl: document.getElementById('settingsServerUrl').value.trim(),
-                serverApiKey: document.getElementById('settingsServerApiKey').value.trim()
-            };
+            // Show loading state
+            showToast('Testing connections...', 'info');
             
-            // Validate settings
-            const validationErrors = this.validateSettings(settings);
-            if (validationErrors.length > 0) {
-                showToast(`Validation errors: ${validationErrors.join(', ')}`, 'error');
-                return;
-            }
-            
-            // Track which settings are being updated
-            const updatedSettings = [];
-            
-            // Only save settings that have values (not empty strings)
-            Object.keys(settings).forEach(key => {
-                const value = settings[key];
-                const currentValue = localStorage.getItem(key) || '';
-                
-                // For theme, always save (it has a default value)
-                if (key === 'theme') {
-                    localStorage.setItem(key, value);
-                    applyTheme(value);
-                    updatedSettings.push('Theme');
-                }
-                // For URLs and API keys, only save if they have actual values
-                else if (value && value !== '') {
-                    // Only update if the value has changed
-                    if (value !== currentValue) {
-                        localStorage.setItem(key, value);
-                        updatedSettings.push(this.getSettingDisplayName(key));
-                    }
-                }
-                // If field is empty but previously had a value, remove it
-                else if (!value && currentValue) {
-                    localStorage.removeItem(key);
-                    updatedSettings.push(this.getSettingDisplayName(key) + ' (cleared)');
+            // Make API call to test connections
+            const response = await fetch('/accounts/test_connections/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
                 }
             });
             
-            // Show appropriate message
-            if (updatedSettings.length > 0) {
-                const message = updatedSettings.length === 1 
-                    ? `Updated: ${updatedSettings[0]}` 
-                    : `Updated ${updatedSettings.length} settings: ${updatedSettings.join(', ')}`;
-                showToast(message, 'success');
-            } else {
-                showToast('No changes detected in settings', 'info');
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to test connections');
             }
             
+            // Display results
+            let resultsHtml = '<div class="connection-test-results">';
+            
+            // Radarr status
+            const radarrResult = data.results.radarr;
+            resultsHtml += `
+                <div class="test-result ${radarrResult.status}">
+                    <strong>Radarr:</strong> 
+                    <span class="status-icon">${this.getStatusIcon(radarrResult.status)}</span>
+                    ${radarrResult.message}
+                </div>
+            `;
+            
+            // Sonarr status
+            const sonarrResult = data.results.sonarr;
+            resultsHtml += `
+                <div class="test-result ${sonarrResult.status}">
+                    <strong>Sonarr:</strong> 
+                    <span class="status-icon">${this.getStatusIcon(sonarrResult.status)}</span>
+                    ${sonarrResult.message}
+                </div>
+            `;
+            
+            // Media server status
+            const mediaResult = data.results.media_server;
+            const serverName = mediaResult.type ? mediaResult.type.charAt(0).toUpperCase() + mediaResult.type.slice(1) : 'Media Server';
+            resultsHtml += `
+                <div class="test-result ${mediaResult.status}">
+                    <strong>${serverName}:</strong> 
+                    <span class="status-icon">${this.getStatusIcon(mediaResult.status)}</span>
+                    ${mediaResult.message}
+                </div>
+            `;
+            
+            resultsHtml += '</div>';
+            
+            // Show results in a modal
+            this.showTestResultsModal('Connection Test Results', resultsHtml);
+            
         } catch (error) {
-            console.error('Error saving settings:', error);
-            showToast('Error saving settings. Please try again.', 'error');
+            console.error('Error testing connections:', error);
+            showToast(`Error testing connections: ${error.message}`, 'error');
         }
     },
     
-    getSettingDisplayName: function(key) {
-        const displayNames = {
-            radarrUrl: 'Radarr URL',
-            radarrApiKey: 'Radarr API Key',
-            sonarrUrl: 'Sonarr URL',
-            sonarrApiKey: 'Sonarr API Key',
-            serverType: 'Server Type',
-            serverUrl: 'Server URL',
-            serverApiKey: 'Server API Key'
-        };
-        return displayNames[key] || key;
+    getStatusIcon: function(status) {
+        switch(status) {
+            case 'success':
+                return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+            case 'error':
+                return '<i class="fas fa-times-circle" style="color: #ef4444;"></i>';
+            case 'not_configured':
+                return '<i class="fas fa-exclamation-circle" style="color: #f59e0b;"></i>';
+            default:
+                return '<i class="fas fa-question-circle" style="color: #6b7280;"></i>';
+        }
     },
     
-    validateSettings: function(settings) {
-        const errors = [];
+    showTestResultsModal: function(title, content) {
+        // Create a simple modal to show results
+        const modalHtml = `
+            <div class="modal active" id="testResultsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>${title}</h2>
+                        <button type="button" class="modal-close" onclick="this.closest('.modal').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                        <div class="step-actions" style="margin-top: 1.5rem;">
+                            <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        // Validate URLs
-        const urlFields = ['radarrUrl', 'sonarrUrl', 'serverUrl'];
-        urlFields.forEach(field => {
-            const value = settings[field];
-            if (value && value !== '') {
-                try {
-                    new URL(value);
-                } catch (e) {
-                    errors.push(`${this.getSettingDisplayName(field)} must be a valid URL`);
-                }
+        // Remove any existing modal
+        const existingModal = document.getElementById('testResultsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Add click outside to close functionality
+        const modal = document.getElementById('testResultsModal');
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
             }
         });
-        
-        // Validate API keys (basic check for reasonable length)
-        const apiFields = ['radarrApiKey', 'sonarrApiKey', 'serverApiKey'];
-        apiFields.forEach(field => {
-            const value = settings[field];
-            if (value && value !== '') {
-                if (value.length < 10) {
-                    errors.push(`${this.getSettingDisplayName(field)} seems too short to be valid`);
-                }
-                if (value.length > 200) {
-                    errors.push(`${this.getSettingDisplayName(field)} seems too long`);
-                }
-            }
-        });
-        
-        return errors;
-    },
-    
-    testConnections: function() {
-        // Test connections to configured services
-        showToast('Testing connections...', 'info');
-        
-        // This would typically make API calls to test the connections
-        setTimeout(() => {
-            showToast('Connection test completed. Check console for details.', 'success');
-        }, 2000);
     }
 };
 

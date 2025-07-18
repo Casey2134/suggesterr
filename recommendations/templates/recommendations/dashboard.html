@@ -4,11 +4,12 @@
 {% block title %}AI Recommendations - Suggesterr{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/suggesterr.css' %}">
+<!-- Main CSS is already loaded in base.html -->
 {% endblock %}
 
 {% block header_search %}
-<div class="search-container">
+<div class="search-box">
+    <i class="search-icon fas fa-search"></i>
     <input type="text" class="search-input" placeholder="Search AI recommendations..." id="searchInput">
 </div>
 {% endblock %}

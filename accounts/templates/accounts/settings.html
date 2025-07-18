@@ -7,8 +7,9 @@
 <link rel="stylesheet" href="{% static 'accounts/css/settings.css' %}">
 {% endblock %}
 
+
 {% block content %}
-<div class="main-content" style="padding-top: 6rem;">
+<div class="content">
     <!-- Settings Section -->
     <section class="section" id="settings-section">
         <div class="section-header">
@@ -16,33 +17,28 @@
         </div>
         
         <div class="settings-container">
+            <!-- Display Django Messages -->
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <!-- User Profile Settings -->
             <div class="settings-card">
                 <h3 class="settings-card-title"><i class="fas fa-user"></i> Profile</h3>
                 <div class="settings-content">
                     <div class="form-group">
                         <label class="form-label">Username</label>
-                        <input type="text" class="form-input" id="settingsUsername" readonly>
+                        <input type="text" class="form-input" value="{{ user.username }}" readonly>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-input" id="settingsEmail" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Theme Settings -->
-            <div class="settings-card">
-                <h3 class="settings-card-title"><i class="fas fa-palette"></i> Appearance</h3>
-                <div class="settings-content">
-                    <div class="form-group">
-                        <label class="form-label">Theme</label>
-                        <select class="form-input" id="settingsTheme">
-                            <option value="dark">Dark</option>
-                            <option value="light">Light</option>
-                            <option value="blue">Blue</option>
-                            <option value="green">Green</option>
-                        </select>
+                        <input type="email" class="form-input" value="{{ user.email }}" readonly>
                     </div>
                 </div>
             </div>
@@ -77,68 +73,104 @@
                 </div>
             </div>
 
-            <!-- Radarr Settings -->
-            <div class="settings-card">
-                <h3 class="settings-card-title"><i class="fas fa-download"></i> Radarr (Movie Downloads)</h3>
-                <div class="settings-content">
-                    <div class="form-group">
-                        <label class="form-label">Radarr URL</label>
-                        <input type="url" class="form-input" id="settingsRadarrUrl" placeholder="http://localhost:7878">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">API Key</label>
-                        <input type="password" class="form-input" id="settingsRadarrApiKey" placeholder="Your Radarr API Key">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sonarr Settings -->
-            <div class="settings-card">
-                <h3 class="settings-card-title"><i class="fas fa-tv"></i> Sonarr (TV Show Downloads)</h3>
-                <div class="settings-content">
-                    <div class="form-group">
-                        <label class="form-label">Sonarr URL</label>
-                        <input type="url" class="form-input" id="settingsSonarrUrl" placeholder="http://localhost:8989">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">API Key</label>
-                        <input type="password" class="form-input" id="settingsSonarrApiKey" placeholder="Your Sonarr API Key">
+            <!-- Settings Form -->
+            <form method="post" action="{% url 'accounts:settings' %}">
+                {% csrf_token %}
+                
+                <!-- Theme Settings -->
+                <div class="settings-card">
+                    <h3 class="settings-card-title"><i class="fas fa-palette"></i> Appearance</h3>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.theme.id_for_label }}">{{ form.theme.label }}</label>
+                            {{ form.theme }}
+                            {% if form.theme.errors %}
+                                <div class="form-error">{{ form.theme.errors.0 }}</div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Media Server Settings -->
-            <div class="settings-card">
-                <h3 class="settings-card-title"><i class="fas fa-server"></i> Media Server</h3>
-                <div class="settings-content">
-                    <div class="form-group">
-                        <label class="form-label">Server Type</label>
-                        <select class="form-input" id="settingsServerType">
-                            <option value="">Select Server Type</option>
-                            <option value="jellyfin">Jellyfin</option>
-                            <option value="plex">Plex</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Server URL</label>
-                        <input type="url" class="form-input" id="settingsServerUrl" placeholder="http://localhost:8096">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">API Key/Token</label>
-                        <input type="password" class="form-input" id="settingsServerApiKey" placeholder="Your API Key or Token">
+                <!-- Radarr Settings -->
+                <div class="settings-card">
+                    <h3 class="settings-card-title"><i class="fas fa-download"></i> Radarr (Movie Downloads)</h3>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.radarr_url.id_for_label }}">{{ form.radarr_url.label }}</label>
+                            {{ form.radarr_url }}
+                            {% if form.radarr_url.errors %}
+                                <div class="form-error">{{ form.radarr_url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.radarr_api_key.id_for_label }}">{{ form.radarr_api_key.label }}</label>
+                            {{ form.radarr_api_key }}
+                            {% if form.radarr_api_key.errors %}
+                                <div class="form-error">{{ form.radarr_api_key.errors.0 }}</div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Save Button -->
-            <div class="settings-actions">
-                <button class="btn btn-primary" onclick="app.saveSettings()">
-                    <i class="fas fa-save"></i> Save Settings
-                </button>
-                <button class="btn btn-secondary" onclick="app.testConnections()">
-                    <i class="fas fa-plug"></i> Test Connections
-                </button>
-            </div>
+                <!-- Sonarr Settings -->
+                <div class="settings-card">
+                    <h3 class="settings-card-title"><i class="fas fa-tv"></i> Sonarr (TV Show Downloads)</h3>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.sonarr_url.id_for_label }}">{{ form.sonarr_url.label }}</label>
+                            {{ form.sonarr_url }}
+                            {% if form.sonarr_url.errors %}
+                                <div class="form-error">{{ form.sonarr_url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.sonarr_api_key.id_for_label }}">{{ form.sonarr_api_key.label }}</label>
+                            {{ form.sonarr_api_key }}
+                            {% if form.sonarr_api_key.errors %}
+                                <div class="form-error">{{ form.sonarr_api_key.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Server Settings -->
+                <div class="settings-card">
+                    <h3 class="settings-card-title"><i class="fas fa-server"></i> Media Server</h3>
+                    <div class="settings-content">
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.server_type.id_for_label }}">{{ form.server_type.label }}</label>
+                            {{ form.server_type }}
+                            {% if form.server_type.errors %}
+                                <div class="form-error">{{ form.server_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.server_url.id_for_label }}">{{ form.server_url.label }}</label>
+                            {{ form.server_url }}
+                            {% if form.server_url.errors %}
+                                <div class="form-error">{{ form.server_url.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.server_api_key.id_for_label }}">{{ form.server_api_key.label }}</label>
+                            {{ form.server_api_key }}
+                            {% if form.server_api_key.errors %}
+                                <div class="form-error">{{ form.server_api_key.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="settings-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="app.testConnections()">
+                        <i class="fas fa-plug"></i> Test Connections
+                    </button>
+                </div>
+            </form>
         </div>
     </section>
 </div>

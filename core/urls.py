@@ -6,7 +6,8 @@ app_name = 'core'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
-    path('health/', health_views.health_check, name='health_check'),
-    path('ready/', health_views.ready_check, name='ready_check'),
-    path('live/', health_views.liveness_check, name='liveness_check'),
+    path('search/', views.search, name='search'),
+    path('api/search/', views.search_api, name='search_api'),
+    path('api/tmdb-search/', views.tmdb_search_api, name='tmdb_search_api'),
+    path('health/', views.health_check, name='health_check'),
 ]

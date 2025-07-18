@@ -1,0 +1,67 @@
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+# Install system dependencies including PostgreSQL and Redis
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    nginx \
+    supervisor \
+    postgresql \
+    postgresql-contrib \
+    redis-server \
+    sudo \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for application
+RUN groupadd -r suggesterr && useradd -r -g suggesterr -s /bin/bash suggesterr \
+    && usermod -aG sudo suggesterr \
+    && echo "suggesterr ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY . .
+
+# Create necessary directories and set permissions
+RUN mkdir -p /app/static /app/media /app/logs /config \
+    && chown -R suggesterr:suggesterr /app \
+    && chown -R suggesterr:suggesterr /config
+
+# Create startup script
+COPY docker/start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Copy supervisor configuration
+COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
+
+# Copy nginx configuration
+COPY docker/nginx.conf /etc/nginx/sites-available/default
+
+# Create PostgreSQL data directory
+RUN mkdir -p /var/lib/postgresql/data \
+    && chown -R postgres:postgres /var/lib/postgresql/data \
+    && chmod 700 /var/lib/postgresql/data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/api/genres/ || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Use startup script
+CMD ["/start.sh"]

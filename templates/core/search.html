@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - Suggesterr{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+/* JavaScript will handle poster URL construction to avoid Django template limitations */
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+    background: var(--hover-bg);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-poster {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.suggestion-details {
+    flex: 1;
+}
+
+.suggestion-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.suggestion-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.search-box {
+    position: relative;
+}
+
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.results-section {
+    margin-bottom: 2rem;
+}
+
+.results-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 0.5rem;
+}
+
+.results-count {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block header_search %}
+<div class="search-box">
+    <i class="search-icon fas fa-search"></i>
+    <input type="text" class="search-input" placeholder="Search..." id="searchInput" value="{{ query }}">
+    <div class="search-suggestions" id="searchSuggestions"></div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Search Results -->
+<section class="section">
+    <div class="section-header">
+        <h1 class="section-title">
+            {% if query %}
+                Search Results for "{{ query }}"
+            {% else %}
+                Search
+            {% endif %}
+        </h1>
+        {% if query and movies or tv_shows %}
+            <span class="results-count">
+                Found {{ movies|length }} movie{{ movies|length|pluralize }} and {{ tv_shows|length }} TV show{{ tv_shows|length|pluralize }}
+            </span>
+        {% endif %}
+    </div>
+
+    {% if not query %}
+        <div class="no-results">
+            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-secondary);"></i>
+            <h3>Search for Movies and TV Shows</h3>
+            <p>Use the search bar above to find your favorite movies and TV shows.</p>
+        </div>
+    {% elif not movies and not tv_shows %}
+        <div class="no-results">
+            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-secondary);"></i>
+            <h3>No Results Found</h3>
+            <p>Try searching with different keywords or check your spelling.</p>
+        </div>
+    {% else %}
+        
+        <!-- Movies Results -->
+        {% if movies %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-film"></i> Movies
+                </h2>
+                <span class="results-count">{{ movies|length }} result{{ movies|length|pluralize }}</span>
+            </div>
+            <div class="movie-row movie-grid">
+                {% for movie in movies %}
+                <div class="movie-card" 
+                     data-id="{{ movie.tmdb_id }}" 
+                     data-type="movie"
+                     onclick="app.movies.showMovieDetails({{ movie.tmdb_id }})">
+                    {% if movie.poster_path %}
+                        {% if 'https://' in movie.poster_path %}
+                            <img src="{{ movie.poster_path }}" 
+                                 class="movie-poster" 
+                                 alt="{{ movie.title }}" 
+                                 loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                        {% else %}
+                            <img src="https://image.tmdb.org/t/p/w300{{ movie.poster_path }}" 
+                                 class="movie-poster" 
+                                 alt="{{ movie.title }}" 
+                                 loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                        {% endif %}
+                    {% else %}
+                        <img src="https://via.placeholder.com/300x450?text=No+Poster" 
+                             class="movie-poster" 
+                             alt="{{ movie.title }}" 
+                             loading="lazy">
+                    {% endif %}
+                    <div class="movie-info">
+                        <h3 class="movie-title">{{ movie.title }}</h3>
+                        <div class="movie-meta">
+                            {% if movie.release_date %}
+                                <span class="movie-year">{{ movie.release_date.year }}</span>
+                            {% endif %}
+                            {% if movie.vote_average %}
+                                <span class="movie-rating">
+                                    <i class="fas fa-star"></i> {{ movie.vote_average|floatformat:1 }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TV Shows Results -->
+        {% if tv_shows %}
+        <div class="results-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-tv"></i> TV Shows
+                </h2>
+                <span class="results-count">{{ tv_shows|length }} result{{ tv_shows|length|pluralize }}</span>
+            </div>
+            <div class="movie-row movie-grid">
+                {% for tv_show in tv_shows %}
+                <div class="movie-card" 
+                     data-id="{{ tv_show.tmdb_id }}" 
+                     data-type="tv"
+                     onclick="app.tvShows.showTVShowDetails({{ tv_show.tmdb_id }})">
+                    {% if tv_show.poster_path %}
+                        {% if 'https://' in tv_show.poster_path %}
+                            <img src="{{ tv_show.poster_path }}" 
+                                 class="movie-poster" 
+                                 alt="{{ tv_show.title }}" 
+                                 loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                        {% else %}
+                            <img src="https://image.tmdb.org/t/p/w300{{ tv_show.poster_path }}" 
+                                 class="movie-poster" 
+                                 alt="{{ tv_show.title }}" 
+                                 loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/300x450?text=No+Poster'">
+                        {% endif %}
+                    {% else %}
+                        <img src="https://via.placeholder.com/300x450?text=No+Poster" 
+                             class="movie-poster" 
+                             alt="{{ tv_show.title }}" 
+                             loading="lazy">
+                    {% endif %}
+                    <div class="movie-info">
+                        <h3 class="movie-title">{{ tv_show.title }}</h3>
+                        <div class="movie-meta">
+                            {% if tv_show.first_air_date %}
+                                <span class="movie-year">{{ tv_show.first_air_date.year }}</span>
+                            {% endif %}
+                            {% if tv_show.vote_average %}
+                                <span class="movie-rating">
+                                    <i class="fas fa-star"></i> {{ tv_show.vote_average|floatformat:1 }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</section>
+
+<!-- Include modals for movie and TV show details -->
+{% include 'movies/partials/movie_details_modal.html' %}
+{% include 'movies/partials/movie_request_modal.html' %}
+{% include 'tv_shows/partials/tv_show_details_modal.html' %}
+{% include 'tv_shows/partials/tv_show_request_modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize search functionality when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    let searchTimeout;
+
+    // Handle search input with debouncing
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchSuggestions.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            fetchSearchSuggestions(query);
+        }, 300);
+    });
+
+    // Handle search form submission
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const query = this.value.trim();
+            if (query) {
+                window.location.href = `{% url 'core:search' %}?q=${encodeURIComponent(query)}`;
+            }
+        }
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-box')) {
+            searchSuggestions.style.display = 'none';
+        }
+    });
+
+    // Fetch search suggestions via AJAX
+    function fetchSearchSuggestions(query) {
+        fetch(`{% url 'core:search_api' %}?q=${encodeURIComponent(query)}`, {
+            headers: {
+                'X-CSRFToken': window.csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            displaySearchSuggestions(data);
+        })
+        .catch(error => {
+            console.error('Search suggestions error:', error);
+        });
+    }
+
+    // Display search suggestions
+    function displaySearchSuggestions(data) {
+        const suggestions = searchSuggestions;
+        suggestions.innerHTML = '';
+
+        const totalResults = data.movies.length + data.tv_shows.length;
+        
+        if (totalResults === 0) {
+            suggestions.style.display = 'none';
+            return;
+        }
+
+        // Add movie suggestions
+        data.movies.forEach(movie => {
+            const item = createSuggestionItem(movie, 'movie');
+            suggestions.appendChild(item);
+        });
+
+        // Add TV show suggestions
+        data.tv_shows.forEach(tv => {
+            const item = createSuggestionItem(tv, 'tv');
+            suggestions.appendChild(item);
+        });
+
+        suggestions.style.display = 'block';
+    }
+
+    // Create suggestion item element
+    function createSuggestionItem(item, type) {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        
+        const posterUrl = item.poster_path 
+            ? `https://image.tmdb.org/t/p/w92${item.poster_path}`
+            : '';
+        
+        const year = type === 'movie' 
+            ? item.release_date 
+            : item.first_air_date;
+        
+        div.innerHTML = `
+            <img src="${posterUrl}" alt="${item.title}" class="suggestion-poster" 
+                 onerror="this.style.display='none'">
+            <div class="suggestion-details">
+                <div class="suggestion-title">${item.title}</div>
+                <div class="suggestion-meta">
+                    ${type === 'movie' ? 'Movie' : 'TV Show'} 
+                    ${year ? `• ${year}` : ''}
+                    ${item.vote_average ? `• ★ ${item.vote_average}` : ''}
+                </div>
+            </div>
+        `;
+        
+        div.addEventListener('click', () => {
+            searchSuggestions.style.display = 'none';
+            if (type === 'movie') {
+                app.movies.showMovieDetails(item.id);
+            } else {
+                app.tv.showTVShowDetails(item.id);
+            }
+        });
+        
+        return div;
+    }
+});
+</script>
+{% endblock %}
