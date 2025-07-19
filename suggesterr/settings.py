@@ -226,9 +226,6 @@ if os.path.exists('/usr/bin/psql'):  # Container detection
         "http://192.168.0.1:6789",
         "http://192.168.1.1:6789",
         "http://10.0.0.1:6789",
-        # Add the specific failing origin
-        "http://192.168.1.233:6789",
-        "https://192.168.1.233:6789",
     ])
 
 # CORS

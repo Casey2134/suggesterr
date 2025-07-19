@@ -16,7 +16,7 @@ services:
       - FORCE_SSL=False
       - DEBUG=True
       # Optional - Custom CSRF trusted origins (for reverse proxies)
-      # - CSRF_TRUSTED_ORIGINS=http://192.168.1.233:6789,https://your-domain.com
+      # - CSRF_TRUSTED_ORIGINS=http://your-server-ip:6789,https://your-domain.com
       
       # Optional - Admin user (created automatically on first run)
       - DJANGO_SUPERUSER_USERNAME=admin
