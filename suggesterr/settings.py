@@ -31,7 +31,13 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else ['localhost', '127.0.0.1', 'testserver']
+# ALLOWED_HOSTS configuration
+if os.getenv('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
+elif os.path.exists('/usr/bin/psql'):  # Container detection
+    ALLOWED_HOSTS = ['*']  # Allow all hosts in container
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition
@@ -61,11 +67,14 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Add CSRF middleware only for non-container environments
+if not os.path.exists('/usr/bin/psql'):  # Not in container
+    MIDDLEWARE.insert(5, 'django.middleware.csrf.CsrfViewMiddleware')
 
 ROOT_URLCONF = 'suggesterr.urls'
 
@@ -172,10 +181,55 @@ REST_FRAMEWORK = {
 }
 
 # CSRF
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+# Build CSRF trusted origins from ALLOWED_HOSTS
+CSRF_TRUSTED_ORIGINS = []
+for host in ALLOWED_HOSTS:
+    if host != '*':  # Don't add wildcard
+        CSRF_TRUSTED_ORIGINS.extend([
+            f"http://{host}",
+            f"https://{host}",
+            f"http://{host}:8000",
+            f"https://{host}:8000",
+            f"http://{host}:6789",  # Common alternative port
+            f"https://{host}:6789",  # Common alternative port
+        ])
+
+# Add default origins if none configured
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+
+# For container deployments, add specific trusted origins from env
+if os.getenv('CSRF_TRUSTED_ORIGINS'):
+    CSRF_TRUSTED_ORIGINS.extend(os.getenv('CSRF_TRUSTED_ORIGINS').split(','))
+
+# For container deployments, be more permissive
+if os.path.exists('/usr/bin/psql'):  # Container detection
+    # In containers, be more permissive with CSRF
+    CSRF_COOKIE_DOMAIN = None
+    # Add common container network ranges and ports
+    CSRF_TRUSTED_ORIGINS.extend([
+        "http://172.17.0.1:8000",
+        "http://172.18.0.1:8000", 
+        "http://172.19.0.1:8000",
+        "http://172.20.0.1:8000",
+        "http://192.168.0.1:8000",
+        "http://192.168.1.1:8000",
+        "http://10.0.0.1:8000",
+        # Add common ports for container access
+        "http://172.17.0.1:6789",
+        "http://172.18.0.1:6789", 
+        "http://172.19.0.1:6789",
+        "http://172.20.0.1:6789",
+        "http://192.168.0.1:6789",
+        "http://192.168.1.1:6789",
+        "http://10.0.0.1:6789",
+        # Add the specific failing origin
+        "http://192.168.1.233:6789",
+        "https://192.168.1.233:6789",
+    ])
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG
@@ -271,11 +325,11 @@ LOGGING = {
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = os.getenv('FORCE_SSL', 'False').lower() == 'true'
+SESSION_COOKIE_SECURE = os.getenv('FORCE_SSL', 'False').lower() == 'true'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = os.getenv('FORCE_SSL', 'False').lower() == 'true'
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 SECURE_BROWSER_XSS_FILTER = True

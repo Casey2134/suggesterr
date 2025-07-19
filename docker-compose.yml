@@ -11,6 +11,13 @@ services:
       - TMDB_API_KEY=your-tmdb-api-key
       - GOOGLE_GEMINI_API_KEY=your-gemini-api-key
       
+      # Security settings - Add your server IP/domain here
+      - ALLOWED_HOSTS=localhost,127.0.0.1,your-server-ip,your-domain.com
+      - FORCE_SSL=False
+      - DEBUG=True
+      # Optional - Custom CSRF trusted origins (for reverse proxies)
+      # - CSRF_TRUSTED_ORIGINS=http://192.168.1.233:6789,https://your-domain.com
+      
       # Optional - Admin user (created automatically on first run)
       - DJANGO_SUPERUSER_USERNAME=admin
       - DJANGO_SUPERUSER_PASSWORD=admin123

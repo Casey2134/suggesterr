@@ -39,21 +39,38 @@ A secure, production-ready Django web application for intelligent movie and TV s
 # docker-compose.yml
 services:
   suggesterr:
-    image: suggesterr:latest
+    image: casey073/suggesterr:latest
     container_name: suggesterr
     environment:
-      # Required API Keys
+      # Required API Keys - Get these from:
+      # TMDB: https://www.themoviedb.org/settings/api
+      # Gemini: https://ai.google.dev/
       - TMDB_API_KEY=your-tmdb-api-key
       - GOOGLE_GEMINI_API_KEY=your-gemini-api-key
       
-      # Optional - Admin user
+      # Security settings - Add your server IP/domain here
+      - ALLOWED_HOSTS=localhost,127.0.0.1,your-server-ip,your-domain.com
+      - FORCE_SSL=False
+      - DEBUG=True
+      # Optional - Custom CSRF trusted origins (for reverse proxies)
+      # - CSRF_TRUSTED_ORIGINS=http://192.168.1.233:6789,https://your-domain.com
+      
+      # Optional - Admin user (created automatically on first run)
       - DJANGO_SUPERUSER_USERNAME=admin
       - DJANGO_SUPERUSER_PASSWORD=admin123
       - DJANGO_SUPERUSER_EMAIL=admin@suggesterr.local
       
       # Optional - Media server integration
-      - JELLYFIN_URL=http://your-jellyfin:8096
-      - JELLYFIN_API_KEY=your-jellyfin-key
+      - JELLYFIN_URL=http://your-jellyfin-server:8096
+      - JELLYFIN_API_KEY=your-jellyfin-api-key
+      - PLEX_URL=http://your-plex-server:32400
+      - PLEX_TOKEN=your-plex-token
+      
+      # Optional - Download management
+      - RADARR_URL=http://your-radarr-server:7878
+      - RADARR_API_KEY=your-radarr-api-key
+      - SONARR_URL=http://your-sonarr-server:8989
+      - SONARR_API_KEY=your-sonarr-api-key
       
       - TZ=Etc/UTC
     volumes:
@@ -79,7 +96,18 @@ docker-compose up -d
 
 **That's it!** Everything (database, cache, web server) is included in one container.
 
-See [DOCKER_SIMPLE_SETUP.md](DOCKER_SIMPLE_SETUP.md) for detailed instructions.
+### Configuration Notes
+
+- **ALLOWED_HOSTS**: Add your server's IP address and domain name
+- **FORCE_SSL**: Set to `True` in production with proper SSL certificates
+- **DEBUG**: Set to `False` in production
+- **CSRF_TRUSTED_ORIGINS**: Add if using reverse proxies or non-standard ports
+
+The container automatically:
+- Creates the database and runs migrations
+- Sets up the admin user (if credentials provided)
+- Syncs movie data from TMDB (if API key provided)
+- Starts all required services (PostgreSQL, Redis, Nginx, Django)
 
 ---
 

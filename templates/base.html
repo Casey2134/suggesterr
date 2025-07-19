@@ -224,10 +224,7 @@
     <script src="{% static 'js/recommendations.js' %}?v=1"></script>
     
     <!-- Include the main app JavaScript -->
-<<<<<<< HEAD
     <script src="{% static 'js/suggesterr-app.js' %}?v=7"></script>
-=======
-    <script src="{% static 'js/suggesterr-app.js' %}?v=6"></script>
     
     <!-- Include profile switcher for authenticated users -->
     {% if user.is_authenticated %}
@@ -240,7 +237,6 @@
         window.profileContext = {{ profile_context|jsonify }};
     </script>
     {% endif %}
->>>>>>> main
 
     {% block extra_js %}{% endblock %}
 </body>
