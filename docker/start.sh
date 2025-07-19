@@ -64,10 +64,16 @@ done
 # Run Django setup
 echo -e "${GREEN}🐍 Setting up Django...${NC}"
 
+# Debug: Check if Django can start
+echo -e "${GREEN}🔍 Checking Django configuration...${NC}"
+python manage.py check || echo "Django check had warnings"
+
 # Run migrations
+echo -e "${GREEN}📦 Running database migrations...${NC}"
 python manage.py migrate --noinput
 
 # Collect static files
+echo -e "${GREEN}📁 Collecting static files...${NC}"
 python manage.py collectstatic --noinput --clear
 
 # Create superuser if credentials are provided
