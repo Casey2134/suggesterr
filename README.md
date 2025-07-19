@@ -52,8 +52,6 @@ services:
       - ALLOWED_HOSTS=localhost,127.0.0.1,your-server-ip,your-domain.com
       - FORCE_SSL=False
       - DEBUG=True
-      # Optional - Custom CSRF trusted origins (for reverse proxies)
-      # - CSRF_TRUSTED_ORIGINS=http://192.168.1.233:6789,https://your-domain.com
       
       # Optional - Admin user (created automatically on first run)
       - DJANGO_SUPERUSER_USERNAME=admin
