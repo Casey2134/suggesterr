@@ -31,7 +31,9 @@
       "Bash(chmod:*)",
       "Bash(./create-release.sh:*)",
       "Bash(docker system prune:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(./venv/bin/pip install django-environ requests tmdbv3api google-generativeai)",
+      "Bash(./venv/bin/python manage.py check:*)"
     ],
     "deny": []
   }

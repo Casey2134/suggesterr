@@ -4,8 +4,8 @@ djangorestframework==3.14.0
 django-cors-headers==4.3.1
 
 # Database and cache
-psycopg2-binary==2.9.9
-redis==5.0.1
+psycopg2-binary==2.9.10
+redis==6.2.0
 dj-database-url==2.1.0
 
 # HTTP requests
@@ -13,6 +13,7 @@ requests==2.31.0
 
 # Environment management
 python-dotenv==1.0.0
+django-environ==0.12.0
 
 # TMDB API
 tmdbv3api==1.9.0
@@ -30,10 +31,9 @@ coverage==7.3.2
 factory-boy==3.3.0
 
 # Security packages
-django-csp==3.7
+django-csp==4.0
 django-ratelimit==4.1.0
-cryptography==41.0.7
-django-environ==0.11.2
+cryptography==45.0.5
 
 # Google AI
-google-generativeai==0.3.2
+google-generativeai==0.8.5
