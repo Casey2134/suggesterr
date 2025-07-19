@@ -868,9 +868,10 @@ body {
 }
 
 .modal.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem;
 }
 
 .modal-content {
@@ -882,6 +883,8 @@ body {
     overflow-y: auto;
     position: relative;
     border: 1px solid var(--border-color);
+    margin: auto;
+    box-sizing: border-box;
 }
 
 .auth-modal .modal-content {
@@ -890,6 +893,14 @@ body {
 
 .onboarding-modal .modal-content {
     max-width: 500px;
+}
+
+/* Request modals need more width for the horizontal layout */
+#movieRequestModal .modal-content,
+#tvRequestModal .modal-content,
+.modal:has(.request-form) .modal-content {
+    max-width: 800px;
+    width: 95%;
 }
 
 .modal-header {
@@ -925,6 +936,182 @@ body {
 
 .modal-body {
     padding: 1.5rem;
+}
+
+/* Request Modal Specific Styles */
+.request-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Update request modals to match movie-details layout */
+.request-form .tv-info-header,
+.request-form .movie-info-header {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.request-form .request-poster {
+    width: 150px;
+    height: 225px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: var(--bg-primary);
+}
+
+.request-form .tv-details,
+.request-form .movie-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.request-form .tv-details h3,
+.request-form .movie-details h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    line-height: 1.3;
+}
+
+.request-form .tv-details p,
+.request-form .movie-details p {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Add meta info styling to match details modal */
+.request-form .request-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.request-form .request-meta .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.request-form .request-meta .detail-item i {
+    color: var(--accent-color);
+    width: 16px;
+}
+
+/* Fallback selectors for request modals in case IDs don't match */
+.modal-body .request-form .movie-info-header,
+.modal-body .request-form .tv-info-header {
+    display: flex !important;
+    gap: 2rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.modal-body .request-form .movie-details-poster {
+    flex-shrink: 0 !important;
+}
+
+.modal-body .request-form .request-poster {
+    width: 150px !important;
+    height: 225px !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    background: var(--bg-primary) !important;
+}
+
+.modal-body .request-form .movie-details {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.request-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.form-select {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.season-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.season-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+}
+
+.season-checkbox:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent-color);
+}
+
+.season-checkbox input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--accent-color);
+}
+
+.form-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+    accent-color: var(--accent-color);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
 }
 
 /* Onboarding Steps */
@@ -1488,6 +1675,29 @@ body {
 
     .movie-details-actions {
         flex-direction: column;
+    }
+
+    /* Request modals responsive styling */
+    .request-form .tv-info-header,
+    .request-form .movie-info-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .request-form .request-poster {
+        width: 120px;
+        height: 180px;
+        align-self: center;
+    }
+
+    /* Ensure request modals are properly centered on mobile */
+    #movieRequestModal .modal-content,
+    #tvRequestModal .modal-content,
+    .modal:has(.request-form) .modal-content {
+        max-width: 95%;
+        width: 95%;
+        margin: 0;
     }
 
     .settings-group {

@@ -7,21 +7,6 @@
 <!-- Main CSS is already loaded in base.html -->
 {% endblock %}
 
-{% block hero_section %}
-<!-- Hero Section -->
-<section class="hero" id="hero">
-    <div class="hero-content">
-        <h1 class="hero-title">Discover Your Next Favorite</h1>
-        <p class="hero-subtitle">AI-powered movie and TV show recommendations tailored just for you</p>
-        
-        <!-- Hero actions for authenticated users -->
-        <div class="hero-actions">
-            <button id="getStartedBtn" class="btn btn-primary btn-lg" onclick="app.showOnboarding()">Get Started</button>
-        </div>
-    </div>
-    <div class="hero-background"></div>
-</section>
-{% endblock %}
 
 {% block content %}
 
@@ -31,7 +16,7 @@
             <h2 class="section-title">Popular Movies</h2>
             <a href="{% url 'movies:popular' %}" class="view-all">View All</a>
         </div>
-        <div class="movie-row" id="popularMovies">
+        <div class="movie-row" id="moviesPopular">
             <div class="loading">
                 <div class="spinner"></div>
             </div>

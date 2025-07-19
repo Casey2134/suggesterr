@@ -232,8 +232,15 @@ class MovieModule {
             return;
         }
         
+        // Create a temporary container to parse the HTML
+        const tempDiv = document.createElement('div');
         const movieCards = movies.map(movie => this.createMovieCard(movie)).join('');
-        container.innerHTML += movieCards;
+        tempDiv.innerHTML = movieCards;
+        
+        // Append each movie card as a DOM element
+        while (tempDiv.firstChild) {
+            container.appendChild(tempDiv.firstChild);
+        }
         
         // Remove any loading indicators
         this.app.hideLoadingIndicator(containerId);

@@ -43,35 +43,7 @@
                 </div>
             </div>
 
-            <!-- Personalization Settings -->
-            <div class="settings-card">
-                <h3 class="settings-card-title"><i class="fas fa-brain"></i> Personalization</h3>
-                <div class="settings-content">
-                    <div class="form-group">
-                        <label class="form-label">Discovery Quiz</label>
-                        <div class="quiz-status-container">
-                            <div id="quiz-status" class="quiz-status">
-                                <div class="loading-spinner"></div>
-                                <span>Loading quiz status...</span>
-                            </div>
-                            <div class="quiz-actions">
-                                <a href="{% url 'recommendations:discovery_quiz' %}" 
-                                   class="btn btn-primary" id="take-quiz-btn">
-                                    <i class="fas fa-play"></i> Take Discovery Quiz
-                                </a>
-                                <button class="btn btn-secondary d-none" id="retake-quiz-btn" 
-                                        onclick="retakeQuiz()">
-                                    <i class="fas fa-redo"></i> Retake Quiz
-                                </button>
-                            </div>
-                        </div>
-                        <p class="form-help">
-                            Complete our Discovery Quiz to help us understand your movie preferences 
-                            and provide more personalized recommendations.
-                        </p>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- Settings Form -->
             <form method="post" action="{% url 'accounts:settings' %}">

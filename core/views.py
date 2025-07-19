@@ -121,12 +121,29 @@ def search_api(request):
         negative_movie_tmdb_ids = list(negative_feedback.filter(content_type='movie').values_list('tmdb_id', flat=True))
         negative_tv_tmdb_ids = list(negative_feedback.filter(content_type='tv').values_list('tmdb_id', flat=True))
     
-    # Limit to 5 results each for real-time suggestions
-    movie_filter = Q(title__icontains=query) | Q(original_title__icontains=query)
-    if negative_movie_tmdb_ids:
-        movie_filter = movie_filter & ~Q(tmdb_id__in=negative_movie_tmdb_ids)
+    # Search movies using TMDB instead of database
+    from movies.tmdb_service import TMDBService
+    tmdb_service = TMDBService()
     
-    movies = Movie.objects.filter(movie_filter).order_by('-popularity')[:5]
+    # Search movies via TMDB API
+    movie_search_results = tmdb_service.search_movies(query, page=1)
+    movies_data = []
+    
+    if movie_search_results and movie_search_results.get('results'):
+        movies_results = movie_search_results['results'][:5]  # Limit to 5 results
+        # Filter out negative feedback items
+        for movie_result in movies_results:
+            tmdb_id = movie_result.get('id')
+            if tmdb_id and tmdb_id not in negative_movie_tmdb_ids:
+                movies_data.append({
+                    'id': tmdb_id,
+                    'title': movie_result.get('title', ''),
+                    'release_date': movie_result.get('release_date', ''),
+                    'poster_path': movie_result.get('poster_path', ''),
+                    'overview': movie_result.get('overview', '')[:100] + '...' if movie_result.get('overview', '') else ''
+                })
+    
+    movies = movies_data
     
     tv_filter = Q(title__icontains=query) | Q(original_title__icontains=query)
     if negative_tv_tmdb_ids:
@@ -134,14 +151,8 @@ def search_api(request):
     
     tv_shows = TVShow.objects.filter(tv_filter).order_by('-popularity')[:5]
     
-    # Serialize the data
-    movies_data = [{
-        'id': movie.tmdb_id,
-        'title': movie.title,
-        'poster_path': movie.poster_path,
-        'release_date': movie.release_date.strftime('%Y') if movie.release_date else '',
-        'vote_average': float(movie.vote_average) if movie.vote_average else 0
-    } for movie in movies]
+    # movies is already serialized data from TMDB, no need to reformat
+    movies_data = movies
     
     tv_shows_data = [{
         'id': tv.tmdb_id,

@@ -45,9 +45,8 @@ def get_user_library_context(user, limit=100):
     # Get library based on server type
     if user_settings.server_type == 'jellyfin':
         jellyfin_service = JellyfinService()
-        # Temporarily override settings for the service
-        jellyfin_service.base_url = user_settings.server_url
-        jellyfin_service.api_key = user_settings.server_api_key
+        # Configure with user's settings
+        jellyfin_service.configure(user_settings.server_url, user_settings.server_api_key)
         library_movies = jellyfin_service.get_library_movies(limit=limit)
     
     elif user_settings.server_type == 'plex':

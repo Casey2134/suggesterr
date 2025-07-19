@@ -11,11 +11,29 @@
             <div id="tvRequestModalContent">
                 <div class="request-form">
                     <div class="tv-info-header">
-                        <img id="requestTVPoster" src="" alt="TV Show Poster" class="request-poster">
+                        <div class="movie-details-poster">
+                            <img id="requestTVPoster" src="" alt="TV Show Poster" class="request-poster">
+                        </div>
                         <div class="tv-details">
                             <h3 id="requestTVTitle"></h3>
-                            <p id="requestTVYear"></p>
-                            <p id="requestTVOverview"></p>
+                            <div class="request-meta">
+                                <span class="detail-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span id="requestTVYear">First Aired: </span>
+                                </span>
+                                <span class="detail-item">
+                                    <i class="fas fa-star"></i>
+                                    <span id="requestTVRating">Rating: </span>
+                                </span>
+                                <span class="detail-item">
+                                    <i class="fas fa-tv"></i>
+                                    <span id="requestTVSeasons">Seasons: </span>
+                                </span>
+                            </div>
+                            <div class="movie-details-overview">
+                                <h4>Overview</h4>
+                                <p id="requestTVOverview"></p>
+                            </div>
                         </div>
                     </div>
                     

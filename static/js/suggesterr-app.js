@@ -68,6 +68,7 @@ class SuggesterrApp {
         if (this.isAuthenticated) {
             this.loadInitialData();
             this.theme.checkSmartOnboarding();
+            this.theme.checkUserConfiguration();
         }
         // If not authenticated and not on an auth page, redirect to login
         else if (!this.isAuthenticated) {
@@ -102,6 +103,13 @@ class SuggesterrApp {
         // Also setup on window resize
         window.addEventListener('resize', () => {
             setTimeout(() => this.setupHorizontalInfiniteScroll(), 100);
+        });
+
+        // Check configuration when window regains focus (user returns from settings)
+        window.addEventListener('focus', () => {
+            if (this.isAuthenticated) {
+                this.theme.checkUserConfiguration();
+            }
         });
 
         // Modal close on background click

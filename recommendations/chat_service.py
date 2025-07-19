@@ -103,38 +103,14 @@ class ChatService:
         if library_context:
             library_titles = [f"'{movie.get('title', 'Unknown')} ({movie.get('year', 'N/A')})'" 
                             for movie in library_context]
-            library_context_str = f"\n\nUSER'S LIBRARY: The user has access to these movies: {', '.join(library_titles[:30])}. Consider this when making recommendations - you can mention movies they already have or suggest complementary titles."
+            library_context_str = f"\n\nUSER'S LIBRARY: The user has access to these movies: {', '.join(library_titles[:30])}. Consider this when making recommendations - you should avoid mentioning movies they already and instead suggest complementary titles."
         
         # Build negative feedback context
         negative_feedback_str = ""
         if negative_feedback:
-            negative_feedback_str = f"\n\nUSER DISLIKES: The user has marked these TMDB movie IDs as 'Not Interested': {', '.join(map(str, negative_feedback))}. Avoid recommending these movies."
+            negative_feedback_str = f"\n\nUSER DISLIKES: The user has marked these TMDB movie IDs as 'Not Interested': {', '.join(map(str, negative_feedback))}. NEVER recommend these movies."
         
-        # Build personality profile context
-        personality_context_str = ""
-        if personality_profile:
-            personality_summary = personality_profile.get('personality_summary', '')
-            genre_preferences = personality_profile.get('genre_preferences', '')
-            preferred_decades = personality_profile.get('preferred_decades', [])
-            content_preferences = personality_profile.get('content_preferences', {})
-            
-            if personality_summary:
-                personality_context_str += f"\n\nUSER'S PERSONALITY PROFILE: {personality_summary}"
-            
-            if genre_preferences:
-                personality_context_str += f"\n\nUSER'S PREFERRED GENRES: {genre_preferences}"
-            
-            if preferred_decades:
-                decades_str = ", ".join(preferred_decades)
-                personality_context_str += f"\n\nUSER'S PREFERRED TIME PERIODS: {decades_str}"
-            
-            if content_preferences:
-                prefs_list = []
-                for key, value in content_preferences.items():
-                    if value:
-                        prefs_list.append(f"{key}: {value}")
-                if prefs_list:
-                    personality_context_str += f"\n\nUSER'S CONTENT PREFERENCES: {'; '.join(prefs_list)}"
+        
         
         # Conversation context
         context_str = f"\n\nCONVERSATION HISTORY:\n{context}" if context else ""
@@ -145,7 +121,6 @@ USER'S CURRENT MESSAGE: {user_message}
 {context_str}
 {library_context_str}
 {negative_feedback_str}
-{personality_context_str}
 
 INSTRUCTIONS:
 1. Respond in a conversational, friendly tone
@@ -156,10 +131,9 @@ INSTRUCTIONS:
 6. Use their personality profile to tailor recommendations - consider their preferred genres, decades, and personality traits
 7. Ask follow-up questions to better understand their preferences
 8. If they ask about a specific movie or TV show, provide helpful information
-9. Keep responses concise but engaging (2-3 paragraphs max)
-10. You can recommend both movies and TV shows based on user preferences
+9. Keep responses concise but engaging (1-2 paragraphs max)
+10. You should recommend both movies and TV shows based on user preferences unless otherwise specified
 11. Always put movie and TV show titles in quotes to make them easy to identify
-12. If the user has completed a personality quiz, use that information to provide more personalized recommendations
 
 Respond naturally as if you're having a conversation with a movie-loving friend."""
         

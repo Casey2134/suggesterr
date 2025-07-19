@@ -11,6 +11,9 @@ from movies.gemini_service import GeminiService
 from movies.services import TVShowService
 from movies.views import filter_negative_feedback
 from integrations.services import SonarrService
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def tv_show_list(request):
@@ -187,32 +190,96 @@ class TVShowViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def ai_recommendations(self, request):
         """Get AI-powered TV show recommendations"""
-        gemini_service = GeminiService()
+        from django.conf import settings
+        from movies.tmdb_tv_service import TMDBTVService
         
-        # Get user preferences from query parameters
-        preferences = {
-            'genres': request.query_params.get('genres', 'drama,comedy,thriller').split(','),
-            'mood': request.query_params.get('mood', 'entertaining'),
-            'year_range': request.query_params.get('year_range', '2015-2024')
-        }
+        # First try Gemini AI if API key is configured
+        if settings.GOOGLE_GEMINI_API_KEY:
+            try:
+                gemini_service = GeminiService()
+                
+                # Get user preferences from query parameters
+                preferences = {
+                    'genres': request.query_params.get('genres', 'drama,comedy,thriller').split(','),
+                    'mood': request.query_params.get('mood', 'entertaining'),
+                    'year_range': request.query_params.get('year_range', '2015-2024')
+                }
+                
+                tv_shows = gemini_service.get_personalized_tv_recommendations(preferences)
+                
+                # If Gemini returns results, use them
+                if tv_shows:
+                    # Filter out negative feedback items
+                    tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')
+                    return Response(tv_shows)
+            except Exception as e:
+                logger.warning(f"Gemini AI failed, falling back to TMDB: {e}")
         
-        tv_shows = gemini_service.get_personalized_tv_recommendations(preferences)
-        
-        # Filter out negative feedback items
-        tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')
-        return Response(tv_shows)
+        # Fallback to TMDB popular TV shows if Gemini fails or isn't configured
+        try:
+            tmdb_tv_service = TMDBTVService()
+            page = int(request.query_params.get('page', 1))
+            popular_data = tmdb_tv_service.get_popular_tv_shows(page)
+            
+            if popular_data and popular_data.get('results'):
+                tv_shows = popular_data['results']
+                # Add AI reason to make it clear these are popular shows
+                for show in tv_shows:
+                    show['ai_reason'] = 'Popular TV show'
+                
+                # Filter out negative feedback items
+                tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')
+                return Response(tv_shows)
+            else:
+                return Response([])
+                
+        except Exception as e:
+            logger.error(f"TMDB fallback also failed: {e}")
+            return Response([])
     
     @action(detail=False, methods=['get'])
     def mood_recommendations(self, request):
         """Get mood-based TV show recommendations"""
+        from django.conf import settings
+        from movies.tmdb_tv_service import TMDBTVService
+        
         mood = request.query_params.get('mood', 'happy')
-        gemini_service = GeminiService()
         
-        tv_shows = gemini_service.get_tv_mood_based_recommendations(mood)
+        # First try Gemini AI if API key is configured
+        if settings.GOOGLE_GEMINI_API_KEY:
+            try:
+                gemini_service = GeminiService()
+                tv_shows = gemini_service.get_tv_mood_based_recommendations(mood)
+                
+                # If Gemini returns results, use them
+                if tv_shows:
+                    # Filter out negative feedback items
+                    tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')
+                    return Response(tv_shows)
+            except Exception as e:
+                logger.warning(f"Gemini AI mood recommendations failed, falling back to TMDB: {e}")
         
-        # Filter out negative feedback items
-        tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')
-        return Response(tv_shows)
+        # Fallback to TMDB popular TV shows if Gemini fails or isn't configured
+        try:
+            tmdb_tv_service = TMDBTVService()
+            page = int(request.query_params.get('page', 1))
+            popular_data = tmdb_tv_service.get_popular_tv_shows(page)
+            
+            if popular_data and popular_data.get('results'):
+                tv_shows = popular_data['results']
+                # Add mood reason to make it clear these are popular shows
+                for show in tv_shows:
+                    show['ai_reason'] = f'Popular {mood} TV show'
+                
+                # Filter out negative feedback items
+                tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')
+                return Response(tv_shows)
+            else:
+                return Response([])
+                
+        except Exception as e:
+            logger.error(f"TMDB fallback for mood recommendations also failed: {e}")
+            return Response([])
     
     @action(detail=False, methods=['get'])
     def similar_tv_shows(self, request):

@@ -11,11 +11,29 @@
             <div id="requestModalContent">
                 <div class="request-form">
                     <div class="movie-info-header">
-                        <img id="requestMoviePoster" src="" alt="Movie Poster" class="request-poster">
+                        <div class="movie-details-poster">
+                            <img id="requestMoviePoster" src="" alt="Movie Poster" class="request-poster">
+                        </div>
                         <div class="movie-details">
                             <h3 id="requestMovieTitle"></h3>
-                            <p id="requestMovieYear"></p>
-                            <p id="requestMovieOverview"></p>
+                            <div class="request-meta">
+                                <span class="detail-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span id="requestMovieYear">Release: </span>
+                                </span>
+                                <span class="detail-item">
+                                    <i class="fas fa-star"></i>
+                                    <span id="requestMovieRating">Rating: </span>
+                                </span>
+                                <span class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="requestMovieRuntime">Runtime: </span>
+                                </span>
+                            </div>
+                            <div class="movie-details-overview">
+                                <h4>Overview</h4>
+                                <p id="requestMovieOverview"></p>
+                            </div>
                         </div>
                     </div>
                     

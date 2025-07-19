@@ -285,15 +285,14 @@ def test_connections(request):
         # Test media server connection (Jellyfin or Plex)
         if user_settings.server_type:
             if user_settings.server_type == 'jellyfin' and user_settings.server_url and user_settings.server_api_key:
-                # Override settings temporarily
-                settings.JELLYFIN_URL = user_settings.server_url
-                settings.JELLYFIN_API_KEY = user_settings.server_api_key
-                
                 jellyfin = JellyfinService()
+                # Configure with user's settings
+                jellyfin.configure(user_settings.server_url, user_settings.server_api_key)
+                
                 try:
-                    # Test by getting library stats
-                    stats = jellyfin.get_library_stats()
-                    if stats:
+                    # Test connection with detailed diagnostics
+                    success, message = jellyfin.test_connection()
+                    if success:
                         results['media_server'] = {
                             'status': 'success',
                             'message': 'Jellyfin connection successful',
@@ -302,7 +301,7 @@ def test_connections(request):
                     else:
                         results['media_server'] = {
                             'status': 'error',
-                            'message': 'Failed to retrieve Jellyfin library stats',
+                            'message': f'Jellyfin connection failed: {message}',
                             'type': 'jellyfin'
                         }
                 except Exception as e:

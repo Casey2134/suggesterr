@@ -126,7 +126,17 @@ def chat_message(request):
         # Generate AI response
         ai_response = chat_service.generate_response(user_message, conversation)
         
-        # Save AI response
+        # Check if the response is an error message from Gemini service
+        if not ai_response or ai_response.startswith("I'm sorry") or "unavailable" in ai_response or "technical difficulties" in ai_response:
+            # Return the error message directly without saving it
+            return JsonResponse({
+                'response': ai_response or 'Sorry, I encountered an error. Please try again.',
+                'conversation_id': conversation.id,
+                'movie_recommendations': [],
+                'tv_show_recommendations': []
+            })
+        
+        # Save AI response only if it's a valid response
         chat_service.save_message(conversation, 'assistant', ai_response)
         
         # Only extract recommendations if the response doesn't contain error messages

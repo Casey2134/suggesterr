@@ -206,9 +206,21 @@ class RecommendationService:
         user_ratings = UserRating.objects.filter(user=user).select_related('movie')
         
         if not user_ratings.exists():
-            # Return popular movies for new users
-            popular_movies = Movie.objects.order_by('-popularity')[:limit]
-            return self._create_recommendations(user, popular_movies, "Popular movies")
+            # Return popular movies for new users - fetch directly from TMDB
+            from movies.tmdb_service import TMDBService
+            tmdb_service = TMDBService()
+            popular_data = tmdb_service.get_popular_movies(page=1)
+            if popular_data and popular_data.get('results'):
+                # Return TMDB data directly instead of creating database recommendations
+                popular_movies = popular_data['results'][:limit]
+                # Add recommendation metadata to each movie
+                for movie in popular_movies:
+                    movie['recommendation_reason'] = "Popular movies"
+                    movie['recommendation_score'] = 85.0
+                return popular_movies
+            else:
+                # Fallback to empty recommendations if TMDB fails
+                return []
         
         # Analyze user preferences
         high_rated_movies = user_ratings.filter(rating__gte=8)

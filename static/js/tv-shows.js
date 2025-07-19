@@ -448,7 +448,15 @@ class TVShowModule {
         }
         container.innerHTML = '';
         
-        tvShows.forEach((tvShow, index) => {
+        // Handle both direct arrays and TMDB API response objects
+        const tvShowList = tvShows.results || tvShows;
+        if (!tvShowList || !Array.isArray(tvShowList)) {
+            console.error('tvShows is not an array:', tvShows);
+            container.innerHTML = '<div class="loading"><p>No TV shows found.</p></div>';
+            return;
+        }
+        
+        tvShowList.forEach((tvShow, index) => {
             try {
                 // Create TV show card using the createTVShowCard method
                 const tvShowCard = this.createTVShowCard(tvShow, index);

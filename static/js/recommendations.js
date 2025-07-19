@@ -52,7 +52,7 @@ class RecommendationsModule {
         if (!container) return;
         
         try {
-            const response = await fetch(`${this.app.apiBase}/tv-recommendations/`);
+            const response = await fetch(`${this.app.apiBase}/tv-shows/ai_recommendations/`);
             const data = await response.json();
             this.app.tvShows.renderTVShowsWithAI(data, 'personalizedTVRecommendations');
             setTimeout(() => this.app.setupHorizontalInfiniteScroll(), 100);

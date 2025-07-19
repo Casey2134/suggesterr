@@ -461,14 +461,34 @@ class ThemeUIModule {
                 // Check if user has configured basic settings
                 const hasRadarr = settings.radarr_url && settings.radarr_api_key;
                 const hasSonarr = settings.sonarr_url && settings.sonarr_api_key;
+                const hasMediaServer = settings.server_url && settings.server_api_key;
                 
-                if (!hasRadarr && !hasSonarr) {
-                    // Show a subtle notification about configuration
-                    this.showToast('Configure your media servers in Settings for the best experience', 'info');
+                // Hide hero section if user has configured any media server
+                if (hasRadarr || hasSonarr || hasMediaServer) {
+                    this.hideHeroSection();
+                } else {
+                    // Show hero section if no configuration exists
+                    this.showHeroSection();
                 }
             }
         } catch (error) {
             console.error('Error checking user configuration:', error);
+            // On error, default to showing the hero section
+            this.showHeroSection();
+        }
+    }
+
+    hideHeroSection() {
+        const heroSection = document.getElementById('hero');
+        if (heroSection) {
+            heroSection.style.display = 'none';
+        }
+    }
+
+    showHeroSection() {
+        const heroSection = document.getElementById('hero');
+        if (heroSection) {
+            heroSection.style.display = 'block';
         }
     }
 }

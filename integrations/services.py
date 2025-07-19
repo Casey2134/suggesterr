@@ -9,10 +9,21 @@ class JellyfinService:
     def __init__(self):
         self.base_url = settings.JELLYFIN_URL
         self.api_key = settings.JELLYFIN_API_KEY
+        self._update_headers()
+    
+    def _update_headers(self):
+        """Update headers with current API key"""
         self.headers = {
             'X-MediaBrowser-Token': self.api_key,
             'Content-Type': 'application/json'
         }
+    
+    def configure(self, base_url, api_key):
+        """Configure the service with new URL and API key"""
+        self.base_url = base_url
+        self.api_key = api_key
+        self._update_headers()
+        logger.info(f"Jellyfin service configured with URL: {base_url}")
     
     def is_movie_available(self, movie):
         if not self.base_url or not self.api_key:
@@ -54,6 +65,32 @@ class JellyfinService:
         
         return title_match
     
+    def test_connection(self):
+        """Test the connection to Jellyfin server"""
+        if not self.base_url or not self.api_key:
+            return False, "Missing URL or API key"
+        
+        try:
+            # Test basic connectivity
+            url = f"{self.base_url}/System/Info/Public"
+            response = requests.get(url, timeout=10)
+            if response.status_code != 200:
+                return False, f"Server not reachable: HTTP {response.status_code}"
+            
+            # Test authentication
+            url = f"{self.base_url}/Items/Counts"
+            response = requests.get(url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+            return True, "Connection successful"
+        except requests.exceptions.ConnectionError as e:
+            return False, f"Connection error: {e}"
+        except requests.exceptions.Timeout as e:
+            return False, f"Timeout error: {e}"
+        except requests.exceptions.HTTPError as e:
+            return False, f"HTTP error: {e.response.status_code} - {e.response.text}"
+        except Exception as e:
+            return False, f"Unexpected error: {e}"
+
     def get_library_stats(self):
         try:
             url = f"{self.base_url}/Items/Counts"
@@ -67,6 +104,7 @@ class JellyfinService:
     def get_library_movies(self, limit=None):
         """Fetch all movies from Jellyfin library for recommendation context"""
         if not self.base_url or not self.api_key:
+            logger.warning("Jellyfin service not configured - missing base_url or api_key")
             return []
         
         try:
@@ -82,11 +120,17 @@ class JellyfinService:
             if limit:
                 params['Limit'] = limit
             
+            logger.info(f"Requesting Jellyfin library from: {url}")
+            logger.debug(f"Request params: {params}")
+            
             response = requests.get(url, headers=self.headers, params=params, timeout=30)
+            logger.info(f"Jellyfin response status: {response.status_code}")
+            
             response.raise_for_status()
             
             data = response.json()
             items = data.get('Items', [])
+            logger.info(f"Jellyfin returned {len(items)} items")
             
             # Format movie data for AI context
             library_movies = []
@@ -138,8 +182,14 @@ class JellyfinService:
             logger.info(f"Retrieved {len(library_movies)} movies from Jellyfin library")
             return library_movies
             
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error fetching Jellyfin library movies: {e}")
+            return []
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error fetching Jellyfin library movies: {e.response.status_code} - {e.response.text}")
+            return []
         except Exception as e:
-            logger.error(f"Error fetching Jellyfin library movies: {e}")
+            logger.error(f"Unexpected error fetching Jellyfin library movies: {e}")
             return []
 
 
