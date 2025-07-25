@@ -33,7 +33,8 @@
       "Bash(docker system prune:*)",
       "Bash(rm:*)",
       "Bash(./venv/bin/pip install django-environ requests tmdbv3api google-generativeai)",
-      "Bash(./venv/bin/python manage.py check:*)"
+      "Bash(./venv/bin/python manage.py check:*)",
+      "Bash(docker inspect:*)"
     ],
     "deny": []
   }

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'accounts',
     'recommendations',
     'integrations',
+    'smart_recommendations',
 ]
 
 MIDDLEWARE = [

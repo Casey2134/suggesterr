@@ -28,6 +28,7 @@ urlpatterns = [
     path('tv-shows/', include('tv_shows.urls')),
     path('accounts/', include('accounts.urls')),
     path('recommendations/', include('recommendations.urls')),
+    path('smart-discover/', include('smart_recommendations.urls')),
     
     # API endpoints  
     path('api/', include('movies.api_urls')),

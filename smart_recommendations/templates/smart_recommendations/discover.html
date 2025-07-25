@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Smart Discover - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1><i class="fas fa-magic"></i> Smart Discover</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Personalized recommendations mixing popular picks and hidden gems</p>
+    </div>
+
+    <div id="recommendations-container">
+        <div id="loading" style="text-align: center; padding: 40px;">
+            <div style="width: 40px; height: 40px; border: 3px solid #ddd; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+            <p>Loading smart recommendations...</p>
+        </div>
+        
+        <div id="recommendations-grid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            <!-- Recommendations will be populated here -->
+        </div>
+        
+        <div id="error-message" style="display: none; text-align: center; padding: 40px; color: #dc3545;">
+            <p>Failed to load recommendations. Please try again.</p>
+            <button onclick="loadRecommendations()" class="btn btn-primary">Retry</button>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <button onclick="refreshRecommendations()" id="refresh-btn" class="btn btn-primary">
+            <i class="fas fa-sync-alt"></i> Get New Recommendations
+        </button>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.recommendation-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-2px);
+}
+
+.card-header {
+    position: relative;
+    height: 200px;
+    background: var(--bg-secondary);
+}
+
+.card-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: white;
+}
+
+.badge-popular {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.badge-niche {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.card-content {
+    padding: 16px;
+}
+
+.card-title {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.card-metadata {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.card-explanation {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+</style>
+
+<script>
+let currentRecommendations = [];
+
+// Load recommendations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadRecommendations();
+});
+
+async function loadRecommendations() {
+    const loading = document.getElementById('loading');
+    const grid = document.getElementById('recommendations-grid');
+    const errorMsg = document.getElementById('error-message');
+    
+    loading.style.display = 'block';
+    grid.style.display = 'none';
+    errorMsg.style.display = 'none';
+    
+    try {
+        const response = await fetch('/smart-discover/api/recommendations/');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            currentRecommendations = data.recommendations;
+            displayRecommendations(data.recommendations);
+        } else {
+            throw new Error(data.message || 'Failed to load recommendations');
+        }
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
+        loading.style.display = 'none';
+        errorMsg.style.display = 'block';
+    }
+}
+
+async function refreshRecommendations() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    
+    try {
+        const response = await fetch('/smart-discover/api/refresh/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            currentRecommendations = data.recommendations;
+            displayRecommendations(data.recommendations);
+        } else {
+            throw new Error(data.message || 'Failed to refresh recommendations');
+        }
+    } catch (error) {
+        console.error('Error refreshing recommendations:', error);
+        alert('Failed to refresh recommendations. Please try again.');
+    } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Get New Recommendations';
+    }
+}
+
+function displayRecommendations(recommendations) {
+    const loading = document.getElementById('loading');
+    const grid = document.getElementById('recommendations-grid');
+    const errorMsg = document.getElementById('error-message');
+    
+    loading.style.display = 'none';
+    errorMsg.style.display = 'none';
+    
+    if (recommendations.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary);">No recommendations available. Try adjusting your preferences.</div>';
+    } else {
+        grid.innerHTML = recommendations.map(rec => createRecommendationCard(rec)).join('');
+    }
+    
+    grid.style.display = 'grid';
+}
+
+function createRecommendationCard(rec) {
+    const releaseYear = rec.release_date ? new Date(rec.release_date).getFullYear() : 'Unknown';
+    const badgeClass = rec.recommendation_type === 'popular' ? 'badge-popular' : 'badge-niche';
+    const badgeText = rec.recommendation_type === 'popular' ? 'Popular' : 'Hidden Gem';
+    
+    return `
+        <div class="recommendation-card" onclick="openModal('${rec.content_type}', ${rec.tmdb_id})">
+            <div class="card-header">
+                ${rec.poster_path ? `<img src="${rec.poster_path}" alt="${rec.title}" class="card-poster">` : ''}
+                <div class="card-badge ${badgeClass}">${badgeText}</div>
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">${rec.title}</h3>
+                <div class="card-metadata">
+                    <span><i class="fas fa-star"></i> ${rec.vote_average.toFixed(1)}</span>
+                    <span>${releaseYear}</span>
+                    <span>${rec.content_type === 'movie' ? 'Movie' : 'TV Show'}</span>
+                </div>
+                <p class="card-explanation">${rec.explanation}</p>
+                <div class="card-actions">
+                    <button class="btn-action" onclick="event.stopPropagation(); giveFeedback(${rec.tmdb_id}, '${rec.content_type}', 'positive')">
+                        <i class="fas fa-thumbs-up"></i> Like
+                    </button>
+                    <button class="btn-action" onclick="event.stopPropagation(); giveFeedback(${rec.tmdb_id}, '${rec.content_type}', 'not_interested')">
+                        <i class="fas fa-times"></i> Not Interested
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function openModal(contentType, tmdbId) {
+    // Integrate with existing modal functionality
+    if (contentType === 'movie') {
+        // Use existing movie modal function
+        if (typeof movies !== 'undefined' && movies.showDetails) {
+            movies.showDetails(tmdbId);
+        }
+    } else {
+        // Use existing TV show modal function
+        if (typeof tvShows !== 'undefined' && tvShows.showDetails) {
+            tvShows.showDetails(tmdbId);
+        }
+    }
+}
+
+async function giveFeedback(tmdbId, contentType, feedbackType) {
+    try {
+        const response = await fetch('/smart-discover/api/feedback/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: JSON.stringify({
+                tmdb_id: tmdbId,
+                content_type: contentType,
+                feedback_type: feedbackType
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Remove the item from current recommendations if not interested
+            if (feedbackType === 'not_interested') {
+                currentRecommendations = currentRecommendations.filter(rec => 
+                    !(rec.tmdb_id === tmdbId && rec.content_type === contentType)
+                );
+                displayRecommendations(currentRecommendations);
+            }
+            
+            // Show a brief success message
+            console.log('Feedback recorded successfully');
+        } else {
+            throw new Error(data.message || 'Failed to record feedback');
+        }
+    } catch (error) {
+        console.error('Error recording feedback:', error);
+        alert('Failed to record feedback. Please try again.');
+    }
+}
+</script>
+{% endblock %}
