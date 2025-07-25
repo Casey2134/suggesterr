@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add real-time validation
     setupRealTimeValidation();
+    
+    // Setup AI provider toggle
+    setupAIProviderToggle();
 });
 
 function setupRealTimeValidation() {
@@ -463,3 +466,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     applyTheme(savedTheme);
 });
+
+function setupAIProviderToggle() {
+    const aiProviderSelect = document.querySelector('select[name="ai_provider"]');
+    const geminiKeyGroup = document.getElementById('gemini-api-key-group');
+    const openaiKeyGroup = document.getElementById('openai-api-key-group');
+    
+    if (aiProviderSelect && geminiKeyGroup && openaiKeyGroup) {
+        // Show/hide API key fields based on selected provider
+        function toggleAPIKeyFields() {
+            // Hide both fields first
+            geminiKeyGroup.style.display = 'none';
+            openaiKeyGroup.style.display = 'none';
+            
+            // Show the appropriate field based on selection
+            if (aiProviderSelect.value === 'gemini') {
+                geminiKeyGroup.style.display = 'block';
+                geminiKeyGroup.style.animation = 'slideInFade 0.3s ease-out';
+            } else if (aiProviderSelect.value === 'openai') {
+                openaiKeyGroup.style.display = 'block';
+                openaiKeyGroup.style.animation = 'slideInFade 0.3s ease-out';
+            }
+        }
+        
+        // Initial check
+        toggleAPIKeyFields();
+        
+        // Add change listener
+        aiProviderSelect.addEventListener('change', toggleAPIKeyFields);
+        
+        // Add animation styles if not already present
+        if (!document.querySelector('#ai-provider-animations')) {
+            const style = document.createElement('style');
+            style.id = 'ai-provider-animations';
+            style.textContent = `
+                @keyframes slideInFade {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+}

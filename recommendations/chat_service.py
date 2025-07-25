@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 import re
-from movies.gemini_service import GeminiService
+from movies.ai_service_factory import AIServiceFactory
 from movies.tmdb_service import TMDBService
 from movies.tmdb_tv_service import TMDBTVService
 from .models import ChatConversation, ChatMessage, UserProfile
@@ -10,7 +10,6 @@ class ChatService:
     """Service for handling conversational movie recommendations"""
     
     def __init__(self):
-        self.gemini_service = GeminiService()
         self.tmdb_service = TMDBService()
         self.tmdb_tv_service = TMDBTVService()
     
@@ -41,8 +40,11 @@ class ChatService:
             personality_profile
         )
         
+        # Get AI service based on user preference
+        ai_service = AIServiceFactory.get_ai_service(conversation.user)
+        
         # Get AI response
-        response = self.gemini_service._make_request(prompt)
+        response = ai_service._make_request(prompt)
         
         if not response:
             return "I'm sorry, I'm having trouble generating a response right now. Please try again."

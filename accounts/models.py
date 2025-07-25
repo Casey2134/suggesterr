@@ -23,6 +23,14 @@ class UserSettings(models.Model):
     server_url = models.URLField(blank=True, null=True, max_length=500)
     server_api_key = EncryptedCharField(max_length=500, blank=True)
     
+    # AI Provider settings
+    ai_provider = models.CharField(max_length=20, default='gemini', choices=[
+        ('gemini', 'Google Gemini'),
+        ('openai', 'OpenAI'),
+    ])
+    gemini_api_key = EncryptedCharField(max_length=500, blank=True)
+    openai_api_key = EncryptedCharField(max_length=500, blank=True)
+    
     # Preferences
     theme = models.CharField(max_length=20, default='dark', choices=[
         ('dark', 'Dark'),

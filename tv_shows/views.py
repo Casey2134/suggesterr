@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import TVShow, TVShowRating, TVShowWatchlist, TVShowRecommendation
 from .serializers import TVShowSerializer, TVShowRatingSerializer, TVShowWatchlistSerializer, TVShowRecommendationSerializer
 from movies.tmdb_tv_service import TMDBTVService
-from movies.gemini_service import GeminiService
+from movies.ai_service_factory import AIServiceFactory
 from movies.services import TVShowService
 from movies.views import filter_negative_feedback
 from integrations.services import SonarrService
@@ -196,7 +196,7 @@ class TVShowViewSet(viewsets.ViewSet):
         # First try Gemini AI if API key is configured
         if settings.GOOGLE_GEMINI_API_KEY:
             try:
-                gemini_service = GeminiService()
+                ai_service = AIServiceFactory.get_ai_service(request.user)
                 
                 # Get user preferences from query parameters
                 preferences = {
@@ -205,7 +205,7 @@ class TVShowViewSet(viewsets.ViewSet):
                     'year_range': request.query_params.get('year_range', '2015-2024')
                 }
                 
-                tv_shows = gemini_service.get_personalized_tv_recommendations(preferences)
+                tv_shows = ai_service.get_personalized_tv_recommendations(preferences)
                 
                 # If Gemini returns results, use them
                 if tv_shows:
@@ -248,8 +248,8 @@ class TVShowViewSet(viewsets.ViewSet):
         # First try Gemini AI if API key is configured
         if settings.GOOGLE_GEMINI_API_KEY:
             try:
-                gemini_service = GeminiService()
-                tv_shows = gemini_service.get_tv_mood_based_recommendations(mood)
+                ai_service = AIServiceFactory.get_ai_service(request.user)
+                tv_shows = ai_service.get_tv_mood_based_recommendations(mood)
                 
                 # If Gemini returns results, use them
                 if tv_shows:
@@ -288,8 +288,8 @@ class TVShowViewSet(viewsets.ViewSet):
         if not tv_show_title:
             return Response({'error': 'TV show title is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        gemini_service = GeminiService()
-        tv_shows = gemini_service.get_similar_tv_shows(tv_show_title)
+        ai_service = AIServiceFactory.get_ai_service(request.user)
+        tv_shows = ai_service.get_similar_tv_shows(tv_show_title)
         
         # Filter out negative feedback items
         tv_shows = filter_negative_feedback(tv_shows, request.user, 'tv')

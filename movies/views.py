@@ -23,7 +23,7 @@ from .serializers import (
 from .services import MovieService, RecommendationService, TVShowService
 from .tmdb_service import TMDBService
 from .tmdb_tv_service import TMDBTVService
-from .gemini_service import GeminiService
+from .ai_service_factory import AIServiceFactory
 from integrations.services import JellyfinService, PlexService, RadarrService
 
 logger = logging.getLogger(__name__)
@@ -253,7 +253,7 @@ class MovieViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def ai_recommendations(self, request):
         """Get AI-powered movie recommendations with library context"""
-        gemini_service = GeminiService()
+        ai_service = AIServiceFactory.get_ai_service(request.user)
         
         # Get user preferences from query parameters
         preferences = {
@@ -269,7 +269,7 @@ class MovieViewSet(viewsets.ViewSet):
             library_context = get_user_library_context(request.user)
             negative_feedback_context = get_user_negative_feedback(request.user, 'movie')
         
-        movies = gemini_service.get_personalized_recommendations(
+        movies = ai_service.get_personalized_recommendations(
             preferences, library_context, negative_feedback_context
         )
         
@@ -281,7 +281,7 @@ class MovieViewSet(viewsets.ViewSet):
     def mood_recommendations(self, request):
         """Get mood-based movie recommendations with library context"""
         mood = request.query_params.get('mood', 'happy')
-        gemini_service = GeminiService()
+        ai_service = AIServiceFactory.get_ai_service(request.user)
         
         # Get library context and negative feedback if user is authenticated
         library_context = []
@@ -290,7 +290,7 @@ class MovieViewSet(viewsets.ViewSet):
             library_context = get_user_library_context(request.user)
             negative_feedback_context = get_user_negative_feedback(request.user, 'movie')
         
-        movies = gemini_service.get_mood_based_recommendations(mood, library_context, negative_feedback_context)
+        movies = ai_service.get_mood_based_recommendations(mood, library_context, negative_feedback_context)
         
         # Filter out negative feedback items
         movies = filter_negative_feedback(movies, request.user, 'movie')
@@ -303,7 +303,7 @@ class MovieViewSet(viewsets.ViewSet):
         if not movie_title:
             return Response({'error': 'Movie title is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        gemini_service = GeminiService()
+        ai_service = AIServiceFactory.get_ai_service(request.user)
         
         # Get library context and negative feedback if user is authenticated
         library_context = []
@@ -312,7 +312,7 @@ class MovieViewSet(viewsets.ViewSet):
             library_context = get_user_library_context(request.user)
             negative_feedback_context = get_user_negative_feedback(request.user, 'movie')
         
-        movies = gemini_service.get_similar_movies(movie_title, library_context, negative_feedback_context)
+        movies = ai_service.get_similar_movies(movie_title, library_context, negative_feedback_context)
         
         # Filter out negative feedback items
         movies = filter_negative_feedback(movies, request.user, 'movie')

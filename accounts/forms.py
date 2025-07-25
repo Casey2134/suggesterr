@@ -9,7 +9,7 @@ class UserSettingsForm(forms.ModelForm):
         model = UserSettings
         fields = [
             'radarr_url', 'radarr_api_key', 'sonarr_url', 'sonarr_api_key',
-            'server_type', 'server_url', 'server_api_key', 'theme'
+            'server_type', 'server_url', 'server_api_key', 'ai_provider', 'gemini_api_key', 'openai_api_key', 'theme'
         ]
         
         widgets = {
@@ -40,6 +40,17 @@ class UserSettingsForm(forms.ModelForm):
                 'class': 'form-input',
                 'placeholder': 'Your API Key or Token'
             }),
+            'ai_provider': forms.Select(attrs={
+                'class': 'form-input'
+            }),
+            'gemini_api_key': forms.PasswordInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Your Google Gemini API Key'
+            }),
+            'openai_api_key': forms.PasswordInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Your OpenAI API Key'
+            }),
             'theme': forms.Select(attrs={
                 'class': 'form-input'
             })
@@ -53,6 +64,9 @@ class UserSettingsForm(forms.ModelForm):
             'server_type': 'Server Type',
             'server_url': 'Server URL',
             'server_api_key': 'API Key/Token',
+            'ai_provider': 'AI Provider',
+            'gemini_api_key': 'Google Gemini API Key',
+            'openai_api_key': 'OpenAI API Key',
             'theme': 'Theme'
         }
     
@@ -70,7 +84,7 @@ class UserSettingsForm(forms.ModelForm):
         # List of fields that should only be updated if they have values
         conditional_fields = [
             'radarr_url', 'radarr_api_key', 'sonarr_url', 'sonarr_api_key',
-            'server_type', 'server_url', 'server_api_key'
+            'server_type', 'server_url', 'server_api_key', 'gemini_api_key', 'openai_api_key'
         ]
         
         # Remove empty values from cleaned_data so they don't get saved
