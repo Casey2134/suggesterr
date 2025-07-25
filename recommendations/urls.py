@@ -12,5 +12,5 @@ urlpatterns = [
     path('quiz/', views.discovery_quiz, name='discovery_quiz'),
     
     # API endpoints
-    path('api/', include('recommendations.api_urls')),
+    path('api/', include('recommendations.api_urls', namespace='recommendations_api')),
 ]

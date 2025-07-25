@@ -2,9 +2,18 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    """Session authentication that doesn't enforce CSRF for API endpoints"""
+    def enforce_csrf(self, request):
+        return  # Don't enforce CSRF
+
+
 from .models import UserNegativeFeedback, ChatConversation, ChatMessage, UserProfile, PersonalityQuiz
 from .serializers import (
     UserNegativeFeedbackSerializer, ChatConversationSerializer, ChatMessageSerializer,
@@ -102,6 +111,7 @@ class UserNegativeFeedbackViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['POST'])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([IsAuthenticated])
 def chat_message(request):
     """Handle chat message and return AI response"""
@@ -162,6 +172,7 @@ def chat_message(request):
 
 
 @api_view(['GET'])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([IsAuthenticated])
 def chat_history(request):
     """Get chat conversation history"""
@@ -179,6 +190,7 @@ def chat_history(request):
 
 
 @api_view(['POST'])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([IsAuthenticated])
 def clear_chat(request):
     """Clear chat conversation history"""

@@ -3,7 +3,7 @@ import re
 from movies.ai_service_factory import AIServiceFactory
 from movies.tmdb_service import TMDBService
 from movies.tmdb_tv_service import TMDBTVService
-from .models import ChatConversation, ChatMessage, UserProfile
+from .models import ChatConversation, ChatMessage, UserProfile, UserNegativeFeedback
 
 
 class ChatService:
@@ -68,7 +68,6 @@ class ChatService:
     
     def _get_user_negative_feedback(self, user) -> List[int]:
         """Get user's negative feedback TMDb IDs"""
-        from .models import UserNegativeFeedback
         return list(
             UserNegativeFeedback.objects.filter(user=user, content_type='movie')
             .values_list('tmdb_id', flat=True)[:50]
@@ -112,7 +111,18 @@ class ChatService:
         if negative_feedback:
             negative_feedback_str = f"\n\nUSER DISLIKES: The user has marked these TMDB movie IDs as 'Not Interested': {', '.join(map(str, negative_feedback))}. NEVER recommend these movies."
         
-        
+        # Build personality profile context
+        personality_profile_str = ""
+        if personality_profile:
+            profile_parts = []
+            if personality_profile.get('personality_summary'):
+                profile_parts.append(f"Personality: {personality_profile['personality_summary']}")
+            if personality_profile.get('genre_preferences'):
+                profile_parts.append(f"Preferred genres: {personality_profile['genre_preferences']}")
+            if personality_profile.get('preferred_decades'):
+                profile_parts.append(f"Preferred decades: {', '.join(personality_profile['preferred_decades'])}")
+            if profile_parts:
+                personality_profile_str = f"\n\nUSER PROFILE: {'; '.join(profile_parts)}. Use this information to tailor your recommendations."
         
         # Conversation context
         context_str = f"\n\nCONVERSATION HISTORY:\n{context}" if context else ""
@@ -123,6 +133,7 @@ USER'S CURRENT MESSAGE: {user_message}
 {context_str}
 {library_context_str}
 {negative_feedback_str}
+{personality_profile_str}
 
 INSTRUCTIONS:
 1. Respond in a conversational, friendly tone
